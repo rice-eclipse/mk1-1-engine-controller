@@ -6,5 +6,7 @@ macro(add_catch_test name)
     add_test(NAME ${name} COMMAND ${name})
 endmacro()
 
+add_subdirectory(mocks)
+
 add_subdirectory(circular_buffer)
 add_subdirectory(threaded_circular_buffer)
