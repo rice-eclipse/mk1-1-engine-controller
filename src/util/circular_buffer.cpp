@@ -34,6 +34,11 @@ ssize_t circular_buffer::write_data(int fd, size_t n, size_t offset) {
         return 0;
     }
     size_t bw = bytes_written.load();
+    /*
+    offset is smallest number we're trying to write.
+    bw - nbytes is the smallest number that hasn't been overwritten.
+    We want to ensure that we aren't trying to write data that has been overwritten.
+     */
     if ((long) offset <  (long) (bw - this->nbytes)) {
         std::cerr << "Bytes already overwritten before sending: Num_to_write:" << n
                   << " Offset:" << offset
@@ -63,6 +68,7 @@ ssize_t circular_buffer::write_data(int fd, size_t n, size_t offset) {
         return result;
     } else {
         //Need to send slightly less data now:
+        //TODO check if write_data failed.
         return write_data(fd, n - result, offset + result);
     }
 }

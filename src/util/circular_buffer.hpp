@@ -16,7 +16,13 @@
  */
 class circular_buffer {
     public:
+        /**
+         * The size of the buffer in bytes.
+         */
         size_t nbytes;
+        /**
+         * The number of bytes that have been written into the buffer (in total).
+         */
         std::atomic_size_t bytes_written;
         char *data;
 
