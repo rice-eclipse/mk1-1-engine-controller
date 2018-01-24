@@ -201,7 +201,7 @@ void main_worker::worker_method() {
 
 
     timestamp_t now = get_time();
-    size_t buff_size = 2 << 18;
+    size_t buff_size = 2 << 20;
 
     lc_main_ti.b = new circular_buffer(buff_size);
     lc_main_ti.scheduled = now;
