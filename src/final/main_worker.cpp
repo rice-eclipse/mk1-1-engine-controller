@@ -374,8 +374,11 @@ void main_worker::worker_method() {
 
                 
                 if (ti->b != NULL) {
+                    //TODO make a logger call to debugv
+                    /*
                     std::cout << "Reading adc please work" << ti->ai.pin << " " 
-                                << ti->ai.single_channel << " " << ti->ai.channel << std::endl; 
+                                << ti->ai.single_channel << " " << ti->ai.channel << std::endl;
+                                */
                     adcd.dat = adcs.read_item(ti->ai);
                     //adcd.dat = count++;
                     //usleep(100);
