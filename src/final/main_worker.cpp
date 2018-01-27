@@ -9,6 +9,7 @@
 #include "../util/timestamps.hpp"
 #include "pins.hpp"
 #include "../util/logger.hpp"
+#include "main_buff_logger.hpp"
 
 #define SEND_TIME 100000 //Send every 100ms.
 
@@ -58,6 +59,7 @@ static void disable_ti_item(timed_item *ti) {
     ti->enabled = false;
 }
 
+// Define all the timed items to be used. (If this just used a C++ class this wouldn't have been a mess).
 static timed_item lc_main_ti = {
         0,
         LC_MAIN_T,
@@ -201,11 +203,13 @@ void main_worker::worker_method() {
     uint16_t adc_result = 0;
 
     timestamp_t now = get_time();
+    // This size is much larger than need be, but gives us about 5 minutes before any major problems with data.
     size_t buff_size = 2 << 20;
 
     // Create a Logger for this thread.
-    Logger logger("logs/main_worker.log", "main_worker", LOG_DEBUG);
+    Logger logger("logs/main_worker.log", "main_worker", LOG_INFO);
 
+    // Initialize the timed items fully.
     // TODO this should really be a class. Oops.
     lc_main_ti.b = new circular_buffer(buff_size);
     lc_main_ti.scheduled = now;
@@ -408,10 +412,15 @@ void main_worker::worker_method() {
                         ti->nbytes_last_send = bw;
                         ti->last_send = now;
 
-                        if (!nw_ref->connected && nqi.nbytes > 0) {
-                            break;
+                        // Next write the
+
+                        // Write the object if we have something to send and we are connected.
+                        if (nw_ref->connected && nqi.nbytes > 0) {
+                            qn.enqueue(nqi);
                         }
-                        qn.enqueue(nqi);
+                        // Next we also write the data to a (binary) log file by just directly dumping it from buff.
+                        write_from_nqi(nqi);
+                        break;
                     }
                 } else {
                     // Handle the case of using ignition stuff.
