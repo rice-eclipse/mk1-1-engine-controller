@@ -8,6 +8,7 @@
 #include "main_worker.hpp"
 #include "../util/timestamps.hpp"
 #include "pins.hpp"
+#include "../util/logger.hpp"
 
 #define SEND_TIME 100000 //Send every 100ms.
 
@@ -191,6 +192,9 @@ static timed_item ign3_ti = {
 
 uint16_t count = 0;
 
+static timestamp_t start_time_nitr = 0;
+static float pressure_avg = 700;
+
 void main_worker::worker_method() {
     network_queue_item nqi;
     work_queue_item wqi;
@@ -199,6 +203,8 @@ void main_worker::worker_method() {
     size_t last_send = 0;
     uint16_t adc_result = 0;
 
+    // Oops, maybe need to do this differently, won't worry right now.
+    //logger work_log("logs/worker.log", "Main Worker", LOG_WARNING);
 
     timestamp_t now = get_time();
     size_t buff_size = 2 << 20;
@@ -306,6 +312,7 @@ void main_worker::worker_method() {
         wqi = qw.poll();
         //std::cout << "Backworker got item:\n";
         timestamp_t now = get_time();
+
         switch (wqi.action) {
             case (wq_process): {
                 c = wqi.data[0];
@@ -372,7 +379,6 @@ void main_worker::worker_method() {
 
                 ti->scheduled = now;
 
-                
                 if (ti->b != NULL) {
                     //TODO make a logger call to debugv
                     /*
@@ -383,6 +389,20 @@ void main_worker::worker_method() {
                     //adcd.dat = count++;
                     //usleep(100);
                     //FIXME switch this.
+
+                    if (ti->a == 15) {
+                        // todo calibrate adcd.dat first
+                        pressure_avg = pressure_avg * 0.95 + adcd.dat * 0.05;
+                    }
+
+                    if (pressure_avg > 800 || pressure_avg < 300) {
+                        if (now - start_time_nitr > 1000) {
+                            logger.error("Pressure shutoff. Closing main valve and unsetting ignition.", now);
+                            bcm2835_gpio_write(MAIN_VALVE, LOW);
+                            bcm2835_gpio_write(IGN_START, LOW);
+                            break;
+                        }
+                    }
 
                     adcd.t = now;
                     ti->b->add_data(&adcd, sizeof(adcd));
@@ -415,6 +435,7 @@ void main_worker::worker_method() {
                         enable_ti_item(&ti_list[11], now);
                         std::cout << "Writing main valve on" << std::endl;
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
+                        start_time_nitr = now;
                         break;
                         // Enable the second igntion thing:
                         // TODO
