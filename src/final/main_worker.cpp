@@ -8,6 +8,7 @@
 #include "main_worker.hpp"
 #include "../util/timestamps.hpp"
 #include "pins.hpp"
+#include "../util/logger.hpp"
 
 #define SEND_TIME 100000 //Send every 100ms.
 
@@ -192,17 +193,20 @@ static timed_item ign3_ti = {
 uint16_t count = 0;
 
 void main_worker::worker_method() {
-    network_queue_item nqi;
-    work_queue_item wqi;
+    network_queue_item nqi = {};
+    work_queue_item wqi = {};
     char c;
     bool sending = false;
     size_t last_send = 0;
     uint16_t adc_result = 0;
 
-
     timestamp_t now = get_time();
     size_t buff_size = 2 << 20;
 
+    // Create a Logger for this thread.
+    Logger logger("logs/main_worker.log", "main_worker", LOG_DEBUG);
+
+    // TODO this should really be a class. Oops.
     lc_main_ti.b = new circular_buffer(buff_size);
     lc_main_ti.scheduled = now;
     lc_main_ti.last_send = now;
@@ -300,17 +304,19 @@ void main_worker::worker_method() {
     // TODO should be using TI add for this. Make this into a C++ object with initialization.
     ti_count = 12;
 
+    logger.info("Beginning main data worker.");
+
     while (1) {
         assert(ti_list[0].b != NULL);
         //std::cout << "Backworker entering loop:\n";
         wqi = qw.poll();
-        //std::cout << "Backworker got item:\n";
+        logger.debugv("Data worker got work item: " + std::to_string(wqi.action));
         timestamp_t now = get_time();
         switch (wqi.action) {
             case (wq_process): {
                 c = wqi.data[0];
 
-                std::cout << "Processing request on worker: " << c << std::endl;
+                logger.debug("Processing request on worker.");
 
                 switch (c) {
                     case '0': {
@@ -324,27 +330,27 @@ void main_worker::worker_method() {
                         break;
                     }
                     case unset_valve: {
-                        std::cout << "Writing main valve off" << std::endl;
+                        logger.info("Writing main valve off.", now);
                         bcm2835_gpio_write(MAIN_VALVE, LOW);
                         break;
                     }
                     case set_valve: {
-                        std::cout << "Writing main valve on" << std::endl;
+                        logger.info("Writing main valve on.", now);
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         break;
                     }
                     case unset_ignition: {
-                        std::cout << "Writing ignition off" << std::endl;
+                        logger.info("Writing ignition off.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
                         break;
                     }
                     case set_ignition: {
-                        std::cout << "Writing ignition on" << std::endl;
+                        logger.info("Writing ignition on.", now);
                         bcm2835_gpio_write(IGN_START, HIGH);
                         break;
                     }
                     case ign_normal: {
-                        std::cout << "Beginning timed ignition process" << std::endl;
+                        logger.info("Beginning ignition process.", now);
                         wqi.action = ign1;
                         qw.enqueue(wqi);
                         break;
@@ -374,7 +380,7 @@ void main_worker::worker_method() {
 
                 
                 if (ti->b != NULL) {
-                    //TODO make a logger call to debugv
+                    //TODO make a Logger call to debugv
                     /*
                     std::cout << "Reading adc please work" << ti->ai.pin << " " 
                                 << ti->ai.single_channel << " " << ti->ai.channel << std::endl;
@@ -386,10 +392,12 @@ void main_worker::worker_method() {
 
                     adcd.t = now;
                     ti->b->add_data(&adcd, sizeof(adcd));
+                    //TODO add some debugv info with information on this logger.(@patrickhan)
                     // Now see if it has been long enough that we should send data:
                     if (now - ti->last_send > SEND_TIME) {
                         size_t bw = ti->b->bytes_written.load();
-                        //std::cout << "Will do sending" << std::endl;
+                        logger.debugv("Will do sending", now);
+                        // TODO improve this logger (@patrickhan)
 
                         //Send some data:
                         nqi.type = nq_send;
@@ -400,7 +408,6 @@ void main_worker::worker_method() {
                         ti->nbytes_last_send = bw;
                         ti->last_send = now;
 
-                        // TODO only enqueue if the nw is connected:
                         if (!nw_ref->connected && nqi.nbytes > 0) {
                             break;
                         }
@@ -413,20 +420,21 @@ void main_worker::worker_method() {
                         disable_ti_item(&ti_list[10]);
                         //enable_ti_item(&ign3_ti, now);
                         enable_ti_item(&ti_list[11], now);
-                        std::cout << "Writing main valve on" << std::endl;
+                        logger.info("Writing main valve on from timed item.", now);
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         break;
                         // Enable the second igntion thing:
                         // TODO
                     }
                     if (ti->a == ign3) {
-                        std::cout << "Writing main valve off" << std::endl;
+                        logger.info("Ending burn.", now);
+                        logger.debug("Writing main valve off from timed item.", now);
                         bcm2835_gpio_write(MAIN_VALVE, LOW);
 
                         // Disable ignition 3.
                         disable_ti_item(&ti_list[11]);
 
-                        std::cout << "Writing ignition off" << std::endl;
+                        logger.debug("Writing ignition off from timed item.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
                         break;
                     }
@@ -435,7 +443,8 @@ void main_worker::worker_method() {
             }
             case ign1: {
                 // Set the ignition on and then enable ign2.
-                std::cout << "Writing ignition on" << std::endl;
+                logger.info("Beginning ignition process", now);
+                logger.debug("Writing ignition off.", now);
                 bcm2835_gpio_write(IGN_START, HIGH);
 
                 enable_ti_item(&ti_list[10], now);
@@ -447,7 +456,7 @@ void main_worker::worker_method() {
             }
 
             default: {
-                std::cerr << "Work queue item not hanlded." << std::endl;
+                logger.error("Work queue item not handled:" + std::to_string(wqi.action), now);
                 break;
             }
 
