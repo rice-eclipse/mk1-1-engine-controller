@@ -7,7 +7,7 @@
 #include <iostream>
 #include "circular_buffer.hpp"
 
-#define DEBUG_CIRC_SEND
+//#define DEBUG_CIRC_SEND
 
 circular_buffer::circular_buffer(size_t size) : bytes_written(0) {
     this->nbytes = size;
