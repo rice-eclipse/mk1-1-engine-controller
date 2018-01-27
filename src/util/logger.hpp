@@ -20,11 +20,13 @@ enum LOG_LEVEL {
     LOG_ERROR = 4,
 
 };
-//TODO current implementation holds noticeable performance penalty if logging is on.
-//One easy simple fix is to use a macro or header implementation that will get inlined and check against some
+//TODO current implementation holds noticeable performance penalty if logging is off.
+//One easy possible(?) fix is to use a macro or header implementation that will get inlined and check against some
 //defined value such as #define LOG_ON true
 //and log_head_wrap(if not LOG_ON: return, else blah);
 //not really worth right now, but worth being aware of.
+//The reason why a header/macro implementation is important is because otherwise individual compilation will
+//prevent the compiler from knowing that logging is off when adding the calls.
 class Logger {
     public:
         string logfile;
