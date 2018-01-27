@@ -397,6 +397,7 @@ void main_worker::worker_method() {
 
                     if (pressure_avg > 800 || pressure_avg < 300) {
                         if (now - start_time_nitr > 1000) {
+                            //abcd
                             logger.error("Pressure shutoff. Closing main valve and unsetting ignition.", now);
                             bcm2835_gpio_write(MAIN_VALVE, LOW);
                             bcm2835_gpio_write(IGN_START, LOW);
