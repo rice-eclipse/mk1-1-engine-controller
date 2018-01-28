@@ -163,6 +163,7 @@ static timed_item tc3_ti = {
         0,
         TC3_T,
         NULL,
+
         {
 
         },
