@@ -65,8 +65,8 @@ extern work_queue_item null_wqi; //An object with the non-matching type to do no
 #define TC2_T TC1_T
 #define TC3_T TC1_T
 
-#define IGN2_T 250000 //250ms
-#define IGN3_T 3000000 // 3000 ms
+#define IGN2_T 750000 //750ms
+#define IGN3_T 7000000 // 7000 ms
 
 #define MAX_TIMED_LIST_LEN 20
 
