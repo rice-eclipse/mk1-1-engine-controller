@@ -196,7 +196,8 @@ static timed_item ign3_ti = {
 uint16_t count = 0;
 
 static timestamp_t start_time_nitr = 0;
-static float pressure_avg = 700;
+static double pressure_avg = 700;
+static bool burn_on = false;
 
 void main_worker::worker_method() {
     network_queue_item nqi = {};
@@ -400,16 +401,21 @@ void main_worker::worker_method() {
 
                     if (ti->a == 15) {
                         // todo calibrate adcd.dat first
-                        pressure_avg = pressure_avg * 0.95 + adcd.dat * 0.05;
-                    }
+                        // For y = mx+b, m=-0.36002  b=1412.207
+                        double pt_cal = -0.36002 * adcd.dat + 1412.207;
+                        pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05;
 
-                    if (pressure_avg > 800 || pressure_avg < 300) {
-                        if (now - start_time_nitr > 1000) {
-                            //abcd
-                            logger.error("Pressure shutoff. Closing main valve and unsetting ignition.", now);
-                            bcm2835_gpio_write(MAIN_VALVE, LOW);
-                            bcm2835_gpio_write(IGN_START, LOW);
-                            break;
+
+                        if ((pressure_avg > 800 || pressure_avg < 300) && burn_on) {
+                            // Start after 1000ms = 1s.
+                            if (now - start_time_nitr > 1000000) {
+                                //abcd
+                                logger.error("Pressure shutoff. Closing main valve and unsetting ignition.", now);
+                                bcm2835_gpio_write(MAIN_VALVE, LOW);
+                                bcm2835_gpio_write(IGN_START, LOW);
+                                burn_on = false;
+                                break;
+                            }
                         }
                     }
 
@@ -449,14 +455,17 @@ void main_worker::worker_method() {
                         //enable_ti_item(&ign3_ti, now);
                         enable_ti_item(&ti_list[11], now);
                         logger.info("Writing main valve on from timed item.", now);
+
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         start_time_nitr = now;
+                        burn_on = true;
                         break;
                         // Enable the second igntion thing:
                         // TODO
                     }
                     if (ti->a == ign3) {
                         logger.info("Ending burn.", now);
+                        burn_on = false;
                         logger.debug("Writing main valve off from timed item.", now);
                         bcm2835_gpio_write(MAIN_VALVE, LOW);
 
