@@ -28,6 +28,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
              * If we get a '1' then stop processing stuff.
              * Otherwise ignore the message.
              */
+            logger.info("Received command " + std::to_string((uint8_t) c));
             wqi.action = wq_process;
             wqi.data[0] = c;
             qw.enqueue(wqi);
