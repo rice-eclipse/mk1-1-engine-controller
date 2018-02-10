@@ -53,10 +53,10 @@ class network_worker : public worker {
 
         /**
          * The method used to process a new request for this worker.
-         * @param nqi The network queue item to process.
+         * @param network_queue_item The network queue item to process.
          * @return Returns true if the network item was processed and false if not.
          */
-        virtual bool process_nqi(network_queue_item &nqi);
+        virtual bool process_nqi(network_queue_item &network_queue_item);
 
         void worker_method();
 

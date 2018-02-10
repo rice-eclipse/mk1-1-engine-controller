@@ -14,7 +14,7 @@ adc_block::adc_block(uint8_t num_adcs) {
 };
 adc_block::~adc_block() {};
 
-uint16_t adc_block::read_item(adc_info idx) {
+uint16_t adc_block::read_item(adc_info_t idx) {
     usleep(50);
     return count++;
 }

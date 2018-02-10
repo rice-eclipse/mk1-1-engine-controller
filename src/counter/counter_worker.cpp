@@ -57,7 +57,7 @@ void counter_worker::worker_method() {
                     size_t bw = buff.bytes_written.load();
                     if (bw > last_send + COUNT_PER_SEND * sizeof(reading)) {
                         //Send some data:
-                        nqi.type = nq_send;
+                        nqi.action = nq_send;
                         nqi.nbytes = bw - last_send;
                         nqi.total_bytes = last_send;
                         nqi.buff = &buff;
@@ -65,12 +65,9 @@ void counter_worker::worker_method() {
                         qn.enqueue(nqi);
                         //std::cout << "Sending 200 bytes" << std::endl;
                         last_send = bw;
-                        //TODO this carries a risk of missing some data. Fine on single worker thread, but bad.
                         usleep(1000);
                     }
-                }
-                //TODO update send data periodically instead of this way.
-
+                }+
             }
         }
     }
@@ -80,7 +77,7 @@ void counter_worker::worker_method() {
 #define CIRC_SIZE 1 << 16
 
 network_queue_item null_nqi = {nq_none}; //An item for null args to
-work_queue_item null_wqi = {wq_none}; //An object with the non-matching type to do nothing.
+work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
 
 circular_buffer buff (CIRC_SIZE);
 
@@ -91,7 +88,7 @@ int main(int argc, char **argv) {
     safe_queue<work_queue_item> qw (null_wqi);
 
     network_queue_item initial = {};
-    initial.type = nq_recv;
+    initial.action = nq_recv;
 
     qn.enqueue(initial);
 

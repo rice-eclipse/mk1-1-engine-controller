@@ -10,7 +10,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
     work_queue_item wqi;
     ssize_t read_result;
 
-    switch (nqi.type) {
+    switch (nqi.action) {
         case (nq_recv): {
             //Poll before we read:
             read_result = do_recv(connfd, &c, 1);

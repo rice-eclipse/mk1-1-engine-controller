@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     safe_queue<work_queue_item> qw (null_wqi);
 
     network_queue_item initial = {};
-    initial.type = nq_recv;
+    initial.action = nq_recv;
 
     qn.enqueue(initial);
 

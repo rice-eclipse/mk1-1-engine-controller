@@ -8,7 +8,7 @@
 #include <cstdint>
 #include "../util/circular_buffer.hpp"
 
-enum nqi_type {
+enum network_queue_item_action {
     nq_none,
     nq_send,
     nq_recv,
@@ -16,14 +16,14 @@ enum nqi_type {
 };
 
 struct network_queue_item {
-    nqi_type type;
+    network_queue_item_action action;
     circular_buffer *buff;
     size_t nbytes; //The number of bytes to send.
     size_t total_bytes; //The total number of bytes written into the relevant buffer at this point.
-    char data[8]; // An extra data field used for simple transactions.
+    char data[8]; // An extra data field used for simple transactions. Should deprecate this.
 };
 
-enum wqi_type {
+enum work_queue_item_action {
     wq_none = 0,
     wq_process,
     wq_start,
@@ -47,7 +47,7 @@ enum wqi_type {
 
 struct work_queue_item {
     //FIXME this is a really bad structure if we're actually doing anything with these.
-    wqi_type action;
+    work_queue_item_action action;
     size_t nbytes; //The size of memory at datap.
     void *extra_datap; //A pointer to the relevant data.
     char data[8]; // An extra data field for simple transactions.
@@ -64,16 +64,16 @@ enum send_code {
     ign_normal = 8,
 
     // Send codes used for dealing with this stuff.
-    lc_mains = 9,
-    lc1s = 10,
-    lc2s = 11,
-    lc3s = 12,
-    pt_feeds = 13,
-    pt_injes = 14,
-    pt_combs = 15,
-    tc1s = 16,
-    tc2s = 17,
-    tc3s = 18
+    lc_main_send = 9,
+    lc1_send = 10,
+    lc2_send = 11,
+    lc3_send = 12,
+    pt_feed_send = 13,
+    pt_inje_send = 14,
+    pt_comb_send = 15,
+    tc1_send = 16,
+    tc2_send = 17,
+    tc3_send = 18
 };
 
 struct send_header_t {

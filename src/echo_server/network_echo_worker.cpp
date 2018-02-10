@@ -12,7 +12,7 @@ bool network_echo_worker::process_nqi(network_queue_item &nqi) {
     work_queue_item wqi;
     ssize_t read_result;
 
-    switch (nqi.type) {
+    switch (nqi.action) {
         case (nq_recv): {
             read_result = do_recv(connfd, &c, 1);
             if (read_result <= 0) {

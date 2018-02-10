@@ -18,28 +18,28 @@ void network_worker::worker_method() {
               */
     ssize_t read_result;
     char c;
-    network_queue_item nqi;
-    work_queue_item wqi;
+    network_queue_item network_queue_item = {};
+    work_queue_item work_queue_item = {};
 
     pf.events = POLLIN | POLLOUT;
 
     while (1) {
         //std::cout << "Networker entering loop:\n";
-        nqi = qn.poll();
+        network_queue_item = qn.poll();
         //std::cout << "Networker got item:\n";
 
-        if (!process_nqi(nqi)) {
-            std::cerr << "Could not process request on network thread: " << nqi.type << std::endl;
+        if (!process_nqi(network_queue_item)) {
+            std::cerr << "Could not process request on network thread: " << network_queue_item.action << std::endl;
         }
     }
 }
 
-bool network_worker::process_nqi(network_queue_item &nqi) {
+bool network_worker::process_nqi(network_queue_item &network_queue_item) {
     if (!connected) {
         std::cout << "Attempting to connect" << std::endl;
         open_connection();
     }
-    switch (nqi.type) {
+    switch (network_queue_item.action) {
         case (nq_none): {
 
 
@@ -52,14 +52,14 @@ bool network_worker::process_nqi(network_queue_item &nqi) {
             } else if (timeout > 0 && !has_acked && t - last_recv > timeout / 2) {
                 //TODO maybe add this as debug option.
                 std::cerr << "Connection inactive. Sending ack." << std::endl;
-                nqi.type = nq_send_ack;
-                qn.enqueue(nqi);
+                network_queue_item.action = nq_send_ack;
+                qn.enqueue(network_queue_item);
                 return true;
             }
 
-            //TODO is this messing with an object we don't own? Doesn't seem to be.
-            nqi.type = nq_recv;
-            qn.enqueue(nqi); //Just always be reading because otherwise we're screwed.
+            //is this messing with an object we don't own? Doesn't seem to be.
+            network_queue_item.action = nq_recv;
+            qn.enqueue(network_queue_item); //Just always be reading because otherwise we're screwed.
             // FIXME need to do some checking to make sure this happens frequently.
             return true;
         }
