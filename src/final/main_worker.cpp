@@ -19,11 +19,10 @@ work_queue_item null_wqi = {wq_none}; //An object with the non-matching action t
 adc_reading adcd = {};
 
 static int ti_count = 0;
-static timed_item ti_list[MAX_TIMED_LIST_LEN] = {};
+static timed_item ti_list[MAX_TIMED_LIST_LEN];// = {};
 
 static void add_timed_item(timed_item &ti) {
-    int i;
-    for (i = 0; i < MAX_TIMED_LIST_LEN; i++) {
+    for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
         if (ti_list[i].action == wq_none) {
             ti_list[i] = ti;
             ti_count++;
@@ -49,6 +48,7 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
     return;
 }
 
+/*
 static void enable_ti_item(timed_item *ti, timestamp_t now) {
     ti->scheduled = now;
     ti->enabled = true;
@@ -57,253 +57,54 @@ static void enable_ti_item(timed_item *ti, timestamp_t now) {
 
 static void disable_ti_item(timed_item *ti) {
     ti->enabled = false;
-}
+}*/
 
 // Define all the timed items to be used. (If this just used a C++ class this wouldn't have been a mess).
-static timed_item lc_main_ti = {
-        0,
-        LC_MAIN_T,
-        NULL,
-        {
 
-        },
-        lc_main,
-        true,
-};
+size_t buff_size = 2 << 20; // About 5 minutes
+timestamp_t now = get_time();
 
-static timed_item lc1_ti = {
-        0,
-        LC1_T,
-        NULL,
-        {
+// todo put these into the array
+// todo change delay defs to timestamp_t
 
-        },
-        lc1,
-        true,
-};
+static timed_item lc_main_ti =
+        timed_item(now, LC_MAIN_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 0}, lc_main, true, now);
+static timed_item lc1_ti =
+        timed_item(now, LC1_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 1}, lc1, true, now);
+static timed_item lc2_ti =
+        timed_item(now, LC2_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 2}, lc2, true, now);
+static timed_item lc3_ti =
+        timed_item(now, LC3_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 3}, lc3, true, now);
 
-static timed_item lc2_ti = {
-        0,
-        LC2_T,
-        NULL,
-        {
+static timed_item pt_inje_ti =
+        timed_item(now, PT_FEED_T, new circular_buffer(buff_size), (adc_info_t) {PT_ADC, true, 1}, pt_feed, true, now);
+static timed_item pt_comb_ti =
+        timed_item(now, PT_INJE_T, new circular_buffer(buff_size), (adc_info_t) {PT_ADC, true, 2}, pt_inje, true, now);
+static timed_item pt_feed_ti =
+        timed_item(now, PT_COMB_T, new circular_buffer(buff_size), (adc_info_t) {PT_ADC, true, 0}, pt_comb, true, now);
 
-        },
-        lc2,
-        true,
-};
+static timed_item tc1_ti =
+        timed_item(now, TC1_T, new circular_buffer(buff_size), (adc_info_t) {TC_ADC, true, 4}, tc1, true, now);
+static timed_item tc2_ti =
+        timed_item(now, TC2_T, new circular_buffer(buff_size), (adc_info_t) {TC_ADC, true, 5}, tc2, true, now);
+static timed_item tc3_ti =
+        timed_item(now, TC3_T, new circular_buffer(buff_size), (adc_info_t) {TC_ADC, true, 6}, tc3, true, now);
 
-static timed_item lc3_ti = {
-        0,
-        LC3_T,
-        NULL,
-        {
+static timed_item ign2_ti =
+        timed_item(now, IGN2_T, NULL, (adc_info_t) {}, ign2, false, now);
+static timed_item ign3_ti =
+        timed_item(now, IGN3_T, NULL, (adc_info_t) {}, ign3, false, now);
 
-        },
-        lc3,
-        true,
-};
-
-static timed_item pt_feed_ti = {
-        0,
-        PT_FEED_T,
-        NULL,
-        {
-
-        },
-        pt_feed,
-        true,
-};
-
-static timed_item pt_inje_ti = {
-        0,
-        PT_INJE_T,
-        NULL,
-        {
-
-        },
-        pt_inje,
-        true,
-};
-
-static timed_item pt_comb_ti = {
-        0,
-        PT_COMB_T,
-        NULL,
-        {
-
-        },
-        pt_comb,
-        true,
-};
-
-static timed_item tc1_ti = {
-        0,
-        TC1_T,
-        NULL,
-        {
-
-        },
-        tc1,
-        true,
-};
-
-static timed_item tc2_ti = {
-        0,
-        TC2_T,
-        NULL,
-        {
-
-        },
-        tc2,
-        true,
-};
-
-static timed_item tc3_ti = {
-        0,
-        TC3_T,
-        NULL,
-        {
-
-        },
-        tc3,
-        true,
-};
-
-static timed_item ign2_ti = {
-        0,
-        IGN2_T,
-        NULL,
-        {
-               // Leave ADC info as zero.
-        },
-        ign2,
-        false,
-};
-
-static timed_item ign3_ti = {
-        0,
-        IGN3_T,
-        NULL,
-        {
-                // Leave ADC info as zero.
-        },
-        ign3,
-        false,
-};
-
-uint16_t count = 0;
+// uint16_t count = 0;
 
 void main_worker::worker_method() {
+
     network_queue_item nq_item = {};
     work_queue_item wq_item = {};
     char c;
-    bool sending = false;
-    size_t last_send = 0;
-    uint16_t adc_result = 0;
-
-    timestamp_t now = get_time();
-    // This size is much larger than need be, but gives us about 5 minutes before any major problems with data.
-    size_t buff_size = 2 << 20;
 
     // Create a Logger for this thread.
     Logger logger("logs/main_worker.log", "main_worker", LOG_INFO);
-
-    // Initialize the timed items fully.
-    // TODO this should really be a class. Oops.
-    lc_main_ti.buffer = new circular_buffer(buff_size);
-    lc_main_ti.scheduled = now;
-    lc_main_ti.last_send = now;
-    lc_main_ti.adc_info.pin = LC_ADC;
-    lc_main_ti.adc_info.single_channel = true;
-    lc_main_ti.adc_info.channel = 0;
-    ti_list[0] = lc_main_ti;
-
-    //if (lc_main_ti.b != NULL) {
-    //    std::cout << "Trying to read from adc." << std::endl;
-    //}
-
-    lc1_ti.buffer = new circular_buffer(buff_size);
-    lc1_ti.scheduled = now;
-    lc1_ti.last_send = now;
-    lc1_ti.adc_info.pin = LC_ADC;
-    lc1_ti.adc_info.single_channel = true;
-    lc1_ti.adc_info.channel = 1;
-    ti_list[1] = lc1_ti;
-
-    lc2_ti.buffer = new circular_buffer(buff_size);
-    lc2_ti.scheduled = now;
-    lc2_ti.last_send = now;
-    lc2_ti.adc_info.pin = LC_ADC;
-    lc2_ti.adc_info.single_channel = true;
-    lc2_ti.adc_info.channel = 2;
-    ti_list[2] = lc2_ti;
-
-    lc3_ti.buffer = new circular_buffer(buff_size);
-    lc3_ti.scheduled = now;
-    lc3_ti.last_send = now;
-    lc3_ti.adc_info.pin = LC_ADC;
-    lc3_ti.adc_info.single_channel = true;
-    lc3_ti.adc_info.channel = 3;
-    ti_list[3] = lc3_ti;
-
-    pt_inje_ti.buffer = new circular_buffer(buff_size);
-    pt_inje_ti.scheduled = now;
-    pt_inje_ti.last_send = now;
-    pt_inje_ti.adc_info.pin = PT_ADC;
-    pt_inje_ti.adc_info.single_channel = true;
-    pt_inje_ti.adc_info.channel = 1;
-    ti_list[4] = pt_inje_ti;
-
-    pt_comb_ti.buffer = new circular_buffer(buff_size);
-    pt_comb_ti.scheduled = now;
-    pt_comb_ti.last_send = now;
-    pt_comb_ti.adc_info.pin = PT_ADC;
-    pt_comb_ti.adc_info.single_channel = true;
-    pt_comb_ti.adc_info.channel = 2;
-    ti_list[5] = pt_comb_ti;
-
-    pt_feed_ti.buffer = new circular_buffer(buff_size);
-    pt_feed_ti.scheduled = now;
-    pt_feed_ti.last_send = now;
-    pt_feed_ti.adc_info.pin = PT_ADC;
-    pt_feed_ti.adc_info.single_channel = true;
-    pt_feed_ti.adc_info.channel = 0;
-    ti_list[6] = pt_feed_ti;
-
-    tc1_ti.buffer = new circular_buffer(buff_size);
-    tc1_ti.scheduled = now;
-    tc1_ti.last_send = now;
-    tc1_ti.adc_info.pin = TC_ADC;
-    tc1_ti.adc_info.single_channel = true;
-    tc1_ti.adc_info.channel = 4;
-    ti_list[7] = tc1_ti;
-
-    tc2_ti.buffer = new circular_buffer(buff_size);
-    tc2_ti.scheduled = now;
-    tc2_ti.last_send = now;
-    tc2_ti.adc_info.pin = TC_ADC;
-    tc2_ti.adc_info.single_channel = true;
-    tc2_ti.adc_info.channel = 5;
-    ti_list[8] = tc2_ti;
-
-    tc3_ti.buffer = new circular_buffer(buff_size);
-    tc3_ti.scheduled = now;
-    tc3_ti.last_send = now;
-    tc3_ti.adc_info.pin = TC_ADC;
-    tc3_ti.adc_info.single_channel = true;
-    tc3_ti.adc_info.channel = 6;
-    ti_list[9] = tc3_ti;
-
-    ign2_ti.buffer = NULL;
-    ign2_ti.scheduled = now;
-    ign2_ti.last_send = now;
-    ti_list[10] = ign2_ti;
-
-    ign3_ti.buffer = NULL;
-    ign3_ti.scheduled = now;
-    ign3_ti.last_send = now;
-    ti_list[11] = ign3_ti;
 
     // TODO should be using TI add for this. Make this into a C++ object with initialization.
     ti_count = 12;
@@ -371,16 +172,6 @@ void main_worker::worker_method() {
                 break;
             }
 
-            // TODO delete these cases. They don't do anything.
-            case (wq_stop) :{
-                sending = false;
-                break;
-            }
-            case (wq_start): {
-                sending = true;
-                break;
-            }
-
             // The case for handling a request from a timed item.
             // This can be left as is, but ideally the logic would be moved into a future timed_item class.
             case (wq_timed): {
@@ -434,8 +225,10 @@ void main_worker::worker_method() {
                     if (ti->action == ign2) {
                         //TODO allow it to enable without just some magic number for list entry.
                         disable_ti_item(&ti_list[10]);
+                        ign2_ti.disable();
                         //enable_ti_item(&ign3_ti, now);
                         enable_ti_item(&ti_list[11], now);
+                        ign3.enable(now);
                         logger.info("Writing main valve on from timed item.", now);
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         break;
