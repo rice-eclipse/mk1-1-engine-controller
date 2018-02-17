@@ -10,6 +10,7 @@
 #include "pins.hpp"
 #include "../util/logger.hpp"
 #include "main_buff_logger.hpp"
+#include "timed_item.hpp"
 
 #define SEND_TIME 100000 //Send every 100ms.
 

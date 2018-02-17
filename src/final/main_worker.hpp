@@ -95,7 +95,7 @@ Because none of these things have strict timing requirements we can easily make 
 
 I think the stricter timing stuff is best left to other parts of the code. For the most part it is completely sufficient to just do a spin loop that checks for more work to do periodically.
 */
-
+/*
 struct timed_item {
     timestamp_t scheduled;
     timestamp_t delay;
@@ -106,5 +106,5 @@ struct timed_item {
     timestamp_t last_send; // A dumb value used to track when it was last sent.
     size_t nbytes_last_send; // The number of bytes that had been written into the circular buffer before the last send.
 }; typedef struct timed_item timed_item;
-
+*/
 #endif //SOFTWARE_MAIN_WORKER_HPP
