@@ -6,21 +6,20 @@
 #include <iostream>
 #include "unistd.h"
 #include "main_worker.hpp"
-#include "../util/timestamps.hpp"
 #include "pins.hpp"
 #include "../util/logger.hpp"
 #include "main_buff_logger.hpp"
-#include "timed_item.hpp"
 
 #define SEND_TIME 100000 //Send every 100ms.
 
 network_queue_item null_nqi = {nq_none}; //An item for null args to
 work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
-
-adc_reading adcd = {};
+adc_reading adc_data = {};
 
 static int ti_count = 0;
-static timed_item ti_list[MAX_TIMED_LIST_LEN];// = {};
+size_t buff_size = 2 << 20; // About 5 minutes
+timestamp_t now = get_time();
+timed_item ti_list[MAX_TIMED_LIST_LEN] = {};
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
@@ -38,10 +37,10 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
     for (i = 0; i < MAX_TIMED_LIST_LEN && ti_seen < ti_count; i++) {
         if (ti_list[i].action != wq_none) {
             ti_seen++;
-            if (ti_list[i].enabled && t > ti_list[i].scheduled && t - ti_list[i].scheduled > ti_list[i].delay) {
+            if (ti_list[i].enabled && t > ti_list[i].scheduled && t - ti_list[i].scheduled > ti_list[i].time_delay) {
                 // Add this to the list of items to process:
                 wqi.action = wq_timed;
-                wqi.extra_datap = (void *) &ti_list[i];
+                wqi.extra_datap = &ti_list[i];
                 qw.enqueue(wqi);
             }
         }
@@ -49,30 +48,12 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
     return;
 }
 
-/*
-static void enable_ti_item(timed_item *ti, timestamp_t now) {
-    ti->scheduled = now;
-    ti->enabled = true;
-    std::cout << "Enabling timed item." << ti->action << std::endl;
-}
-
-static void disable_ti_item(timed_item *ti) {
-    ti->enabled = false;
-}*/
-
-// Define all the timed items to be used. (If this just used a C++ class this wouldn't have been a mess).
-
-size_t buff_size = 2 << 20; // About 5 minutes
-timestamp_t now = get_time();
-
-// todo put these into the array
-// todo change delay defs to timestamp_t
-
+// In case we need to reference the timed items individually
 static timed_item lc_main_ti =
         timed_item(now, LC_MAIN_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 0}, lc_main, true, now);
 static timed_item lc1_ti =
         timed_item(now, LC1_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 1}, lc1, true, now);
-static timed_item lc2_ti =
+timed_item lc2_ti =
         timed_item(now, LC2_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 2}, lc2, true, now);
 static timed_item lc3_ti =
         timed_item(now, LC3_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 3}, lc3, true, now);
@@ -92,13 +73,15 @@ static timed_item tc3_ti =
         timed_item(now, TC3_T, new circular_buffer(buff_size), (adc_info_t) {TC_ADC, true, 6}, tc3, true, now);
 
 static timed_item ign2_ti =
-        timed_item(now, IGN2_T, NULL, (adc_info_t) {}, ign2, false, now);
+        timed_item(now, IGN2_T, nullptr, (adc_info_t) {}, ign2, false, now);
 static timed_item ign3_ti =
-        timed_item(now, IGN3_T, NULL, (adc_info_t) {}, ign3, false, now);
-
-// uint16_t count = 0;
+        timed_item(now, IGN3_T, nullptr, (adc_info_t) {}, ign3, false, now);
 
 void main_worker::worker_method() {
+    // Copy the values into ti_list. There might be a better way to do this.
+    timed_item temp_ti_list[] = {lc_main_ti, lc1_ti, lc2_ti, pt_inje_ti, pt_comb_ti, pt_feed_ti, tc1_ti, tc2_ti,
+                                 tc3_ti, ign2_ti, ign3_ti};
+    std::copy(temp_ti_list, temp_ti_list + 12, ti_list);
 
     network_queue_item nq_item = {};
     work_queue_item wq_item = {};
@@ -107,7 +90,6 @@ void main_worker::worker_method() {
     // Create a Logger for this thread.
     Logger logger("logs/main_worker.log", "main_worker", LOG_INFO);
 
-    // TODO should be using TI add for this. Make this into a C++ object with initialization.
     ti_count = 12;
 
     logger.info("Beginning main data worker.");
@@ -177,10 +159,9 @@ void main_worker::worker_method() {
             // This can be left as is, but ideally the logic would be moved into a future timed_item class.
             case (wq_timed): {
                 // Get the timed item that added this:
-                timed_item *ti = (timed_item *) wq_item.extra_datap;
+                timed_item *ti = wq_item.extra_datap;
 
                 ti->scheduled = now;
-
                 
                 if (ti->buffer != NULL) {
                     //TODO make a Logger call to debugv
@@ -188,13 +169,13 @@ void main_worker::worker_method() {
                     std::cout << "Reading adc please work" << ti->adc_info.pin << " "
                                 << ti->adc_info.single_channel << " " << ti->adc_info.channel << std::endl;
                                 */
-                    adcd.dat = adcs.read_item(ti->adc_info);
-                    //adcd.dat = count++;
+                    adc_data.dat = adcs.read_item(ti->adc_info);
+                    //adc_data.dat = count++;
                     //usleep(100);
                     //FIXME switch this.
 
-                    adcd.t = now;
-                    ti->buffer->add_data(&adcd, sizeof(adcd));
+                    adc_data.t = now;
+                    ti->buffer->add_data(&adc_data, sizeof(adc_data));
                     //TODO add some debugv info with information on this logger.(@patrickhan)
                     // Now see if it has been long enough that we should send data:
                     if (now - ti->last_send > SEND_TIME) {
@@ -211,8 +192,6 @@ void main_worker::worker_method() {
                         ti->nbytes_last_send = bw;
                         ti->last_send = now;
 
-                        // Next write the
-
                         // Write the object if we have something to send and we are connected.
                         if (nw_ref->connected && nq_item.nbytes > 0) {
                             qn.enqueue(nq_item);
@@ -221,15 +200,10 @@ void main_worker::worker_method() {
                         write_from_nqi(nq_item);
                         break;
                     }
-                } else {
-                    // Handle the case of using ignition stuff.
+                } else { // Handle the case of using ignition stuff. //todo this naming is confusing
                     if (ti->action == ign2) {
-                        //TODO allow it to enable without just some magic number for list entry.
-                        disable_ti_item(&ti_list[10]);
                         ign2_ti.disable();
-                        //enable_ti_item(&ign3_ti, now);
-                        enable_ti_item(&ti_list[11], now);
-                        ign3.enable(now);
+                        ign3_ti.enable(now);
                         logger.info("Writing main valve on from timed item.", now);
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         break;
@@ -241,8 +215,7 @@ void main_worker::worker_method() {
                         logger.debug("Writing main valve off from timed item.", now);
                         bcm2835_gpio_write(MAIN_VALVE, LOW);
 
-                        // Disable ignition 3.
-                        disable_ti_item(&ti_list[11]);
+                        ign3_ti.disable();
 
                         logger.debug("Writing ignition off from timed item.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
@@ -257,7 +230,8 @@ void main_worker::worker_method() {
                 logger.debug("Writing ignition off.", now);
                 bcm2835_gpio_write(IGN_START, HIGH);
 
-                enable_ti_item(&ti_list[10], now);
+                //todo original was timed_list[10], which is now ign2_ti?
+                ign2_ti.enable(now);
                 break;
             }
             case (wq_none): {

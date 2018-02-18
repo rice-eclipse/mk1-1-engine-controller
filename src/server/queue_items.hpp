@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include "../util/circular_buffer.hpp"
+#include "../final/timed_item.hpp"
 
 enum network_queue_item_action {
     nq_none,
@@ -49,7 +50,7 @@ struct work_queue_item {
     //FIXME this is a really bad structure if we're actually doing anything with these.
     work_queue_item_action action;
     size_t nbytes; //The size of memory at datap.
-    void *extra_datap; //A pointer to the relevant data.
+    timed_item *extra_datap; //A pointer to the relevant data.
     char data[8]; // An extra data field for simple transactions.
 };
 
