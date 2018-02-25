@@ -7,7 +7,29 @@
 
 #include <cstdint>
 #include "../util/circular_buffer.hpp"
-#include "../final/timed_item.hpp"
+class timed_item;
+
+enum work_queue_item_action {
+    wq_none = 0,
+    wq_process,
+    wq_start,
+    wq_stop,
+    wq_timed, // Do some timed item with a given datap.
+    // Items used for timed items:
+            lc_main = 9,
+    lc1 = 10,
+    lc2 = 11,
+    lc3 = 12,
+    pt_feed = 13,
+    pt_inje = 14,
+    pt_comb = 15,
+    tc1 = 16,
+    tc2 = 17,
+    tc3 = 18,
+    ign1,
+    ign2,
+    ign3,
+};
 
 enum network_queue_item_action {
     nq_none,
@@ -22,28 +44,6 @@ struct network_queue_item {
     size_t nbytes; //The number of bytes to send.
     size_t total_bytes; //The total number of bytes written into the relevant buffer at this point.
     char data[8]; // An extra data field used for simple transactions. Should deprecate this.
-};
-
-enum work_queue_item_action {
-    wq_none = 0,
-    wq_process,
-    wq_start,
-    wq_stop,
-    wq_timed, // Do some timed item with a given datap.
-    // Items used for timed items:
-    lc_main = 9,
-    lc1 = 10,
-    lc2 = 11,
-    lc3 = 12,
-    pt_feed = 13,
-    pt_inje = 14,
-    pt_comb = 15,
-    tc1 = 16,
-    tc2 = 17,
-    tc3 = 18,
-    ign1,
-    ign2,
-    ign3,
 };
 
 struct work_queue_item {

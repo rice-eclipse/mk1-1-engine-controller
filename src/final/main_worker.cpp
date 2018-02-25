@@ -9,6 +9,7 @@
 #include "pins.hpp"
 #include "../util/logger.hpp"
 #include "main_buff_logger.hpp"
+#include "timed_item.hpp"
 
 #define SEND_TIME 100000 //Send every 100ms.
 
@@ -19,7 +20,7 @@ adc_reading adc_data = {};
 static int ti_count = 0;
 size_t buff_size = 2 << 20; // About 5 minutes
 timestamp_t now = get_time();
-timed_item ti_list[MAX_TIMED_LIST_LEN] = {};
+timed_item ti_list[MAX_TIMED_LIST_LEN];
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {

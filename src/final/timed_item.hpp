@@ -24,6 +24,7 @@
 
 #define MAX_TIMED_LIST_LEN 20
 
+#include "../server/queue_items.hpp"
 #include "../util/circular_buffer.hpp"
 #include "../server/worker.hpp"
 #include "../adc/lib/adc_block.hpp"
@@ -41,9 +42,9 @@ class timed_item {
         timestamp_t last_send; // A dumb value used to track when it was last sent.
         size_t nbytes_last_send; // The number of bytes that had been written into the circular buffer before the last send.
 
-    timed_item::timed_item() = default;
+    timed_item() = default;
 
-    timed_item::timed_item(timestamp_t sched, int del, circular_buffer *buff, adc_info_t adc,
+    timed_item(timestamp_t sched, int del, circular_buffer *buff, adc_info_t adc,
                            work_queue_item_action wq_action, bool enable, timestamp_t last_send)
             : scheduled(sched)
             , time_delay((timestamp_t) del)
