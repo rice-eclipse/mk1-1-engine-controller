@@ -179,10 +179,10 @@ void main_worker::worker_method() {
                     //usleep(100);
                     //FIXME switch this.
 
-                    if (ti->a == 15) {
+                    if (ti->action == 15) {
                         // todo calibrate adcd.dat first
                         // For y = mx+b, m=-0.36002  b=1412.207
-                        double pt_cal = -0.36002 * adcd.dat + 1412.207;
+                        double pt_cal = -0.36002 * adc_data.dat + 1412.207;
                         pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05;
 
 
@@ -199,8 +199,8 @@ void main_worker::worker_method() {
                         }
                     }
 
-                    adcd.t = now;
-                    ti->b->add_data(&adcd, sizeof(adcd));
+                    adc_data.t = now;
+                    ti->buffer->add_data(&adc_data, sizeof(adc_data));
                     //TODO add some debugv info with information on this logger.(@patrickhan)
                     // Now see if it has been long enough that we should send data:
                     if (now - ti->last_send > SEND_TIME) {
