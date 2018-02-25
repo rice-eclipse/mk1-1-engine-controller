@@ -67,7 +67,7 @@ void counter_worker::worker_method() {
                         last_send = bw;
                         usleep(1000);
                     }
-                }+
+                }
             }
         }
     }
