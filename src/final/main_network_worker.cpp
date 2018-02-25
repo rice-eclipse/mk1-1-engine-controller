@@ -5,10 +5,14 @@
 
 #include <iostream>
 #include "main_network_worker.hpp"
+#include "../util/logger.hpp"
+
 bool main_network_worker::process_nqi(network_queue_item &nqi) {
     char c;
     work_queue_item wqi;
     ssize_t read_result;
+
+    Logger logger("logs/nw.log", "network thread", LOG_INFO);
 
     switch (nqi.action) {
         case (nq_recv): {
@@ -24,6 +28,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
              * If we get a '1' then stop processing stuff.
              * Otherwise ignore the message.
              */
+            logger.info("Received command " + std::to_string((uint8_t) c));
             wqi.action = wq_process;
             wqi.data[0] = c;
             qw.enqueue(wqi);
@@ -39,7 +44,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
             if (poll(&pf, 1, 0) == 0) {
                 if (!pf.revents & POLLOUT) {
                     //Cannot write. Will block.
-                    std::cerr << "Socket blocked" << std::endl;
+                    logger.error("Socket blocked on write.");
                     return true;
                 }
             }
@@ -50,7 +55,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
             // TODO this header should correspond to something from the nqi data.
             network_worker::send_header(h, nqi.nbytes);
 
-            std::cout << "Writing data: Nbytes:" << nqi.nbytes << "Type:" << h << std::endl;
+            logger.debug("Writing data: Nbytes: " + std::to_string(nqi.nbytes) + " Type: " + std::to_string(h));
             if (buff->write_data(connfd, nqi.nbytes, nqi.total_bytes) != 0) {
                 std::cerr << "Connection Closed" << std::endl;
                 //exit(0);

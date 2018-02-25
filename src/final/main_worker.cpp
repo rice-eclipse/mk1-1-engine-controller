@@ -78,6 +78,10 @@ static timed_item ign2_ti =
 static timed_item ign3_ti =
         timed_item(now, IGN3_T, nullptr, (adc_info_t) {}, ign3, false, now);
 
+static timestamp_t start_time_nitr = 0;
+static double pressure_avg = 700;
+static bool burn_on = false;
+
 void main_worker::worker_method() {
     // Copy the values into ti_list. There might be a better way to do this.
     timed_item temp_ti_list[] = {lc_main_ti, lc1_ti, lc2_ti, pt_inje_ti, pt_comb_ti, pt_feed_ti, tc1_ti, tc2_ti,
@@ -163,7 +167,7 @@ void main_worker::worker_method() {
                 timed_item *ti = wq_item.extra_datap;
 
                 ti->scheduled = now;
-                
+
                 if (ti->buffer != NULL) {
                     //TODO make a Logger call to debugv
                     /*
@@ -174,6 +178,26 @@ void main_worker::worker_method() {
                     //adc_data.dat = count++;
                     //usleep(100);
                     //FIXME switch this.
+
+                    if (ti->action == 15) {
+                        // todo calibrate adcd.dat first
+                        // For y = mx+b, m=-0.36002  b=1412.207
+                        double pt_cal = -0.36002 * adc_data.dat + 1412.207;
+                        pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05;
+
+
+                        if ((pressure_avg > 800 || pressure_avg < 300) && burn_on) {
+                            // Start after 1000ms = 1s.
+                            if (now - start_time_nitr > 1000000) {
+                                //abcd
+                                logger.error("Pressure shutoff. Closing main valve and unsetting ignition.", now);
+                                bcm2835_gpio_write(MAIN_VALVE, LOW);
+                                bcm2835_gpio_write(IGN_START, LOW);
+                                burn_on = false;
+                                break;
+                            }
+                        }
+                    }
 
                     adc_data.t = now;
                     ti->buffer->add_data(&adc_data, sizeof(adc_data));
@@ -206,13 +230,17 @@ void main_worker::worker_method() {
                         ign2_ti.disable();
                         ign3_ti.enable(now);
                         logger.info("Writing main valve on from timed item.", now);
+
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
+                        start_time_nitr = now;
+                        burn_on = true;
                         break;
                         // Enable the second igntion thing:
                         // TODO
                     }
                     if (ti->action == ign3) {
                         logger.info("Ending burn.", now);
+                        burn_on = false;
                         logger.debug("Writing main valve off from timed item.", now);
                         bcm2835_gpio_write(MAIN_VALVE, LOW);
 
