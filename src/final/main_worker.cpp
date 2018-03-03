@@ -19,7 +19,7 @@ adc_reading adc_data = {};
 
 static int ti_count = 0;
 size_t buff_size = 2 << 20; // About 5 minutes
-timestamp_t now = get_time();
+timestamp_t now = 0;
 timed_item ti_list[MAX_TIMED_LIST_LEN];
 
 static void add_timed_item(timed_item &ti) {
@@ -84,7 +84,7 @@ static bool burn_on = false;
 
 void main_worker::worker_method() {
     // Copy the values into ti_list. There might be a better way to do this.
-    timed_item temp_ti_list[] = {lc_main_ti, lc1_ti, lc2_ti, pt_inje_ti, pt_comb_ti, pt_feed_ti, tc1_ti, tc2_ti,
+    timed_item temp_ti_list[] = {lc_main_ti, lc1_ti, lc2_ti, lc3_ti, pt_inje_ti, pt_comb_ti, pt_feed_ti, tc1_ti, tc2_ti,
                                  tc3_ti, ign2_ti, ign3_ti};
     std::copy(temp_ti_list, temp_ti_list + 12, ti_list);
 
@@ -179,7 +179,7 @@ void main_worker::worker_method() {
                     //usleep(100);
                     //FIXME switch this.
 
-                    if (ti->action == 15) {
+                    if (ti->action == pt_comb) {
                         // todo calibrate adcd.dat first
                         // For y = mx+b, m=-0.36002  b=1412.207
                         double pt_cal = -0.36002 * adc_data.dat + 1412.207;
@@ -194,7 +194,6 @@ void main_worker::worker_method() {
                                 bcm2835_gpio_write(MAIN_VALVE, LOW);
                                 bcm2835_gpio_write(IGN_START, LOW);
                                 burn_on = false;
-                                break;
                             }
                         }
                     }
@@ -227,8 +226,12 @@ void main_worker::worker_method() {
                     }
                 } else { // Handle the case of using ignition stuff. //todo this naming is confusing
                     if (ti->action == ign2) {
-                        ign2_ti.disable();
-                        ign3_ti.enable(now);
+                        // ign2_ti.disable();
+                        // ign3_ti.enable(now);
+
+                        ti_list[10].disable();
+                        ti_list[11].enable(now);
+
                         logger.info("Writing main valve on from timed item.", now);
 
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
@@ -244,7 +247,8 @@ void main_worker::worker_method() {
                         logger.debug("Writing main valve off from timed item.", now);
                         bcm2835_gpio_write(MAIN_VALVE, LOW);
 
-                        ign3_ti.disable();
+                        // ign3_ti.disable();
+                        ti_list[11].disable();
 
                         logger.debug("Writing ignition off from timed item.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
@@ -260,7 +264,8 @@ void main_worker::worker_method() {
                 bcm2835_gpio_write(IGN_START, HIGH);
 
                 //todo original was timed_list[10], which is now ign2_ti?
-                ign2_ti.enable(now);
+                // ign2_ti.enable(now);
+                ti_list[10].enable(now);
                 break;
             }
             case (wq_none): {
