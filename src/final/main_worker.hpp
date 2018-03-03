@@ -11,6 +11,9 @@
 #include "../util/timestamps.hpp"
 #include "main_network_worker.hpp"
 
+extern int preignite_us; // microseconds to run ignition before flow.
+extern int hotflow_us; // microseconds to run hot flow.
+
 struct adc_reading {
     timestamp_t dat;
     uint64_t t;
