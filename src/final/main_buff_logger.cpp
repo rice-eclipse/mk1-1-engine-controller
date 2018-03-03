@@ -24,34 +24,34 @@ ssize_t write_buff(circular_buffer *buff, send_code h, size_t nbytes, size_t tot
     int fd;
 
     switch (h) {
-        case (lc_mains):
+        case (lc_main_send):
             fname = "logs/lc_main.log";
             break;
-        case (lc1s):
+        case (lc1_send):
             fname = "logs/lc1.log";
             break;
-        case (lc2s):
+        case (lc2_send):
             fname = "logs/lc2.log";
             break;
-        case (lc3s):
+        case (lc3_send):
             fname = "logs/lc3.log";
             break;
-        case (pt_combs):
+        case (pt_comb_send):
             fname = "logs/pt_comb.log";
             break;
-        case (pt_feeds):
+        case (pt_feed_send):
             fname = "logs/pt_feed.log";
             break;
-        case (pt_injes):
+        case (pt_inje_send):
             fname = "logs/pt_inje.log";
             break;
-        case (tc1s):
+        case (tc1_send):
             fname = "logs/tc1.log";
             break;
-        case (tc2s):
+        case (tc2_send):
             fname = "logs/tc2.log";
             break;
-        case (tc3s):
+        case (tc3_send):
             fname = "logs/tc3.log";
             break;
         default :

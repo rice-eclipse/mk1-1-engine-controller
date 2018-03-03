@@ -14,7 +14,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
 
     Logger logger("logs/nw.log", "network thread", LOG_INFO);
 
-    switch (nqi.type) {
+    switch (nqi.action) {
         case (nq_recv): {
             //Poll before we read:
             read_result = do_recv(connfd, &c, 1);

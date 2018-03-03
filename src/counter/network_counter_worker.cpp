@@ -11,12 +11,11 @@ bool network_counter_worker::process_nqi(network_queue_item &nqi) {
     work_queue_item wqi;
     ssize_t read_result;
 
-    switch (nqi.type) {
+    switch (nqi.action) {
         case (nq_recv): {
             //Poll before we read:
             read_result = do_recv(connfd, &c, 1);
             if (read_result <= 0) {
-                //FIXME, do something better?
                 return true;
             }
             /*

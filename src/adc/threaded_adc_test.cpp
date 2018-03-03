@@ -20,7 +20,7 @@ struct adc_reading {
 
 network_queue_item null_nqi = {nq_none}; //An item for null args to
 
-work_queue_item null_wqi = {wq_none}; //An object with the non-matching type to do nothing.
+work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
 
 /**
  * Function used by the network thread.
@@ -48,13 +48,13 @@ int main(int argc, char **argv) {
 
     set_base_time();
 
-    int port = 1234; //TODO set this from inputs.
+    int port = 1234;
 
     safe_queue<network_queue_item> qn (null_nqi);
     safe_queue<work_queue_item> qw (null_wqi);
 
     network_queue_item initial = {};
-    initial.type = nq_recv;
+    initial.action = nq_recv;
 
     qn.enqueue(initial);
 
@@ -94,7 +94,7 @@ void worker_thread(safe_queue<network_queue_item> &qn, safe_queue<work_queue_ite
                 std::cout << c; //Write the byte.
 
                 //Send c back over the socket.
-                nqi.type = nq_send;
+                nqi.action = nq_send;
                 nqi.data = (uint8_t) c;
                 qn.enqueue(nqi);
                  */
@@ -126,18 +126,18 @@ void worker_thread(safe_queue<network_queue_item> &qn, safe_queue<work_queue_ite
                     size_t bw = buff.bytes_written.load();
                     if (bw > last_send + 100 * sizeof(adc_value)) {
                         //Send some data:
-                        nqi.type = nq_send;
+                        nqi.action = nq_send;
                         nqi.nbytes = 100 * sizeof(adc_value);
                         nqi.total_bytes = bw;
 
                         qn.enqueue(nqi);
                         //std::cout << "Sending 200 bytes" << std::endl;
                         last_send = bw;
-                        //TODO this carries a risk of missing some data. Fine on single worker thread, but bad.
+                        //This carries a risk of missing some data. Fine on single worker thread, but bad.
                         usleep(1000);
                     }
                 }
-                //TODO update send data periodically instead of this way.
+                //This is poorly written. Best to update send data periodically instead of this way.
 
             }
         }
@@ -168,7 +168,7 @@ void network_thread(safe_queue<network_queue_item> &qn, safe_queue<work_queue_it
         //std::cout << "Networker entering loop:\n";
         nqi = qn.poll();
         //std::cout << "Networker got item:\n";
-        switch (nqi.type) {
+        switch (nqi.action) {
             case (nq_recv): {
                 //Poll before we read:
                 if (poll(&pf, 1, 0) >= 0) {
@@ -217,7 +217,7 @@ void network_thread(safe_queue<network_queue_item> &qn, safe_queue<work_queue_it
 
             }
             case (nq_none): {
-                nqi.type = nq_recv;
+                nqi.action = nq_recv;
                 qn.enqueue(nqi); //Just always be reading because otherwise we're screwed.
             }
         }

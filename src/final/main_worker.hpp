@@ -12,7 +12,7 @@
 #include "main_network_worker.hpp"
 
 struct adc_reading {
-    uint16_t dat;
+    timestamp_t dat;
     uint64_t t;
 };
 extern struct adc_reading adcd;
@@ -47,38 +47,33 @@ class main_worker : public worker {
 #define CIRC_SIZE 1 << 16
 
 extern network_queue_item null_nqi; //An item for null args to
-extern work_queue_item null_wqi; //An object with the non-matching type to do nothing.
+extern work_queue_item null_wqi; //An object with the non-matching action to do nothing.
 
-// TODO please put these times somewhere less stupid.
-// Times used for setting timed actions.
-#define LC_MAIN_T 500
+/*
+BIG TODO
+How this (timed items for scheduling stuff) currently works
 
-#define LC1_T 1000
-#define LC2_T LC1_T
-#define LC3_T LC1_T
+List of timed items (structs, bad RJ) with a bunch of stuff in each of them:
+	Timed item contains a flag corresponding to an action.
+	Also possibly contains some data choices:
+		ADC_INFO to sample
+		Buffer that gets filled after sampling
 
-#define PT_FEED_T 1000
-#define PT_INJE_T PT_FEED_T
-#define PT_COMB_T PT_FEED_T
+		Crap related to scheduling sending the adc buffer.
 
-#define TC1_T 20000
-#define TC2_T TC1_T
-#define TC3_T TC1_T
 
-#define IGN2_T 750000 //750ms
-#define IGN3_T 7000000 // 7000 ms
+One major simplification would be to change these to be classes
+with a virtual method to process the object.
 
-#define MAX_TIMED_LIST_LEN 20
+And then could have instances of these for each ADC.
+Instance that accepts a lambda? -> This is a little trickier and it also still has that
+chicken and egg problem of setting/unsetting another timed item.
+    I don't have a good solution to this issue, but there are easish bandaid fixes for now
+    that still greatly improve code readability.
 
-struct timed_item {
-    timestamp_t scheduled;
-    timestamp_t delay;
-    circular_buffer *b; // The output buffer used by this item.
-    adc_info ai; // The adc info used to call the sampler:
-    wqi_type a;
-    bool enabled;
-    timestamp_t last_send; // A dumb value used to track when it was last sent.
-    size_t nbytes_last_send;
-}; typedef struct timed_item timed_item;
+Because none of these things have strict timing requirements we can easily make them virtual methods. If we need stricter timing we would need RT_PREEMPT and usage of real hardware timers.
+
+I think the stricter timing stuff is best left to other parts of the code. For the most part it is completely sufficient to just do a spin loop that checks for more work to do periodically.
+*/
 
 #endif //SOFTWARE_MAIN_WORKER_HPP
