@@ -21,6 +21,8 @@ static int ti_count = 12;
 size_t buff_size = 2 << 20; // About 5 minutes
 timestamp_t now = 0;
 timed_item ti_list[MAX_TIMED_LIST_LEN];
+int preignite_us = IGN2_T;
+int hotflow_us = IGN3_T;
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
@@ -78,9 +80,9 @@ void main_worker::worker_method() {
             timed_item(now, TC3_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 6), tc3, true, now);
 
     timed_item ign2_ti =
-            timed_item(now, IGN2_T, nullptr, adc_info_t(), ign2, false, now);
+            timed_item(now, preignite_us, nullptr, adc_info_t(), ign2, false, now);
     timed_item ign3_ti =
-            timed_item(now, IGN3_T, nullptr, adc_info_t(), ign3, false, now);
+            timed_item(now, hotflow_us, nullptr, adc_info_t(), ign3, false, now);
 
     // Copy the values into ti_list. There might be a better way to do this.
     timed_item temp_ti_list[] = {lc_main_ti, lc1_ti, lc2_ti, lc3_ti, pt_inje_ti, pt_comb_ti, pt_feed_ti, tc1_ti, tc2_ti,

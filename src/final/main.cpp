@@ -29,12 +29,24 @@ circular_buffer buff(CIRC_SIZE);
 int main(int argc, char **argv) {
     // Validate the arguments. TODO use a real argparse library
     int port, result;
-    if (argc != 2) {
-        std::cerr << "Incorrect number of arguments. Usage final <port>" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Incorrect number of arguments. Usage final <port> <preignite_milliseconds> <hotflow_milliseconds>" << std::endl;
         return 1;
     }
 
     port = atoi(argv[1]);
+    preignite_us = atoi(argv[2]) * 1000;
+    hotflow_us = atoi(argv[3]) * 1000;
+
+    if (preignite_us < 0 || preignite_us > 5000000) {
+        std::cerr << "Incorrect preignite time." << std::endl;
+        return 1;
+    }
+
+    if (hotflow_us < 0 || hotflow_us > 15000000) {
+        std::cerr << "Incorrect hotflow time." << std::endl;
+        return 1;
+    }
 
     if (port <= 0) {
         std::cerr << "Port must be larger than zero." << std::endl;
