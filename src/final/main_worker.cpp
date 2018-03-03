@@ -96,10 +96,6 @@ void main_worker::worker_method() {
 
     logger.info("Beginning main data worker.");
 
-    // FML
-    adc_info_t a(LC_ADC, true, 0);
-    assert(a.pin == LC_ADC);
-
     assert(ti_list[0].adc_info.pin == LC_ADC);
     while (1) {
         assert(ti_list[0].buffer != NULL);
