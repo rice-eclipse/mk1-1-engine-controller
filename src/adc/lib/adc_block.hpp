@@ -20,6 +20,15 @@ struct adc_info_t {
     int pad             :4; //Pad an extra four bits.
     bool single_channel :1; //The :1 means use one bit for this.
     uint8_t channel     :3; //The three bits to pick channel.
+
+    adc_info_t() = default;
+
+    adc_info_t(RPiGPIOPin pin, bool single_channel, uint8_t chan)
+    : pin(pin)
+    , pad(0)
+    , single_channel(single_channel)
+    , channel(chan)
+    {};
 };
 
 /**

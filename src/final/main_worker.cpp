@@ -50,32 +50,32 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
 
 // In case we need to reference the timed items individually
 static timed_item lc_main_ti =
-        timed_item(now, LC_MAIN_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 0}, lc_main, true, now);
+        timed_item(now, LC_MAIN_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 0), lc_main, true, now);
 static timed_item lc1_ti =
-        timed_item(now, LC1_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 1}, lc1, true, now);
+        timed_item(now, LC1_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 1), lc1, true, now);
 static timed_item lc2_ti =
-        timed_item(now, LC2_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 2}, lc2, true, now);
+        timed_item(now, LC2_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 2), lc2, true, now);
 static timed_item lc3_ti =
-        timed_item(now, LC3_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 3}, lc3, true, now);
+        timed_item(now, LC3_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 3), lc3, true, now);
 
 static timed_item pt_inje_ti =
-        timed_item(now, PT_FEED_T, new circular_buffer(buff_size), (adc_info_t) {PT_ADC, true, 1}, pt_feed, true, now);
+        timed_item(now, PT_FEED_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 1), pt_feed, true, now);
 static timed_item pt_comb_ti =
-        timed_item(now, PT_INJE_T, new circular_buffer(buff_size), (adc_info_t) {PT_ADC, true, 2}, pt_inje, true, now);
+        timed_item(now, PT_INJE_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 2), pt_inje, true, now);
 static timed_item pt_feed_ti =
-        timed_item(now, PT_COMB_T, new circular_buffer(buff_size), (adc_info_t) {PT_ADC, true, 0}, pt_comb, true, now);
+        timed_item(now, PT_COMB_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 0), pt_comb, true, now);
 
 static timed_item tc1_ti =
-        timed_item(now, TC1_T, new circular_buffer(buff_size), (adc_info_t) {TC_ADC, true, 4}, tc1, true, now);
+        timed_item(now, TC1_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 4), tc1, true, now);
 static timed_item tc2_ti =
-        timed_item(now, TC2_T, new circular_buffer(buff_size), (adc_info_t) {TC_ADC, true, 5}, tc2, true, now);
+        timed_item(now, TC2_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 5), tc2, true, now);
 static timed_item tc3_ti =
-        timed_item(now, TC3_T, new circular_buffer(buff_size), (adc_info_t) {TC_ADC, true, 6}, tc3, true, now);
+        timed_item(now, TC3_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 6), tc3, true, now);
 
 static timed_item ign2_ti =
-        timed_item(now, IGN2_T, nullptr, (adc_info_t) {}, ign2, false, now);
+        timed_item(now, IGN2_T, nullptr, adc_info_t(), ign2, false, now);
 static timed_item ign3_ti =
-        timed_item(now, IGN3_T, nullptr, (adc_info_t) {}, ign3, false, now);
+        timed_item(now, IGN3_T, nullptr, adc_info_t(), ign3, false, now);
 
 static timestamp_t start_time_nitr = 0;
 static double pressure_avg = 700;
@@ -89,7 +89,7 @@ void main_worker::worker_method() {
 
     network_queue_item nq_item = {};
     work_queue_item wq_item = {};
-    char c; 
+    char c;
 
     // Create a Logger for this thread.
     Logger logger("logs/main_worker.log", "main_worker", LOG_INFO);
