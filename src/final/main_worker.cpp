@@ -17,7 +17,7 @@ network_queue_item null_nqi = {nq_none}; //An item for null args to
 work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
 adc_reading adc_data = {};
 
-static int ti_count = 0;
+static int ti_count = 12;
 size_t buff_size = 2 << 20; // About 5 minutes
 timestamp_t now = 0;
 timed_item ti_list[MAX_TIMED_LIST_LEN];
@@ -46,7 +46,6 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
             }
         }
     }
-    return;
 }
 
 // In case we need to reference the timed items individually
@@ -54,7 +53,7 @@ static timed_item lc_main_ti =
         timed_item(now, LC_MAIN_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 0}, lc_main, true, now);
 static timed_item lc1_ti =
         timed_item(now, LC1_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 1}, lc1, true, now);
-timed_item lc2_ti =
+static timed_item lc2_ti =
         timed_item(now, LC2_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 2}, lc2, true, now);
 static timed_item lc3_ti =
         timed_item(now, LC3_T, new circular_buffer(buff_size), (adc_info_t) {LC_ADC, true, 3}, lc3, true, now);
@@ -94,8 +93,6 @@ void main_worker::worker_method() {
 
     // Create a Logger for this thread.
     Logger logger("logs/main_worker.log", "main_worker", LOG_INFO);
-
-    ti_count = 12;
 
     logger.info("Beginning main data worker.");
 
@@ -138,6 +135,8 @@ void main_worker::worker_method() {
                     case unset_ignition: {
                         logger.info("Writing ignition off.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
+                        logger.info("Writing main valve off.", now);
+                        bcm2835_gpio_write(MAIN_VALVE, LOW); // TODO ensure this gets done elsewhere.
                         break;
                     }
                     case set_ignition: {
@@ -182,9 +181,8 @@ void main_worker::worker_method() {
                     if (ti->action == pt_comb) {
                         // todo calibrate adcd.dat first
                         // For y = mx+b, m=-0.36002  b=1412.207
-                        double pt_cal = -0.36002 * adc_data.dat + 1412.207;
+                        double pt_cal = 0.2810327855 * adc_data.dat - 1068.22;
                         pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05;
-
 
                         if ((pressure_avg > 800 || pressure_avg < 300) && burn_on) {
                             // Start after 1000ms = 1s.

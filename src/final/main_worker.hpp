@@ -12,7 +12,7 @@
 #include "main_network_worker.hpp"
 
 struct adc_reading {
-    uint16_t dat;
+    timestamp_t dat;
     uint64_t t;
 };
 extern struct adc_reading adcd;

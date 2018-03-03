@@ -18,7 +18,7 @@ target_link_libraries(${PROJECT_NAME} ${FINAL_LIBS} ${FINAL_LIBS_EXT})
 # A mocked version of the final code that can be used for debugging.
 # TODO include some modification of the logging so that we clearly observe the difference.
 
-add_executable(final_mocked main.cpp ../../test/mocks/fake_initialization.cpp main_network_worker.cpp
+add_executable(final_mocked main.cpp ../../test/mocks/fake_initialization.cpp main_network_worker.cpp main_network_worker.hpp
         ../server/network_worker.cpp main_worker.cpp pins.cpp main_buff_logger.cpp timed_item.cpp)
 
 add_dependencies(final_mocked ${FINAL_LIBS_MOCKS})
