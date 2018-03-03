@@ -89,7 +89,7 @@ void main_worker::worker_method() {
 
     network_queue_item nq_item = {};
     work_queue_item wq_item = {};
-    char c;
+    char c; 
 
     // Create a Logger for this thread.
     Logger logger("logs/main_worker.log", "main_worker", LOG_INFO);
