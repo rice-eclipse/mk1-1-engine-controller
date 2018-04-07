@@ -7,6 +7,8 @@
 #include "network_worker.hpp"
 #include "../util/listener.hpp"
 #include "../util/timestamps.hpp"
+#include "../final/ini_config.hpp"
+#include <arpa/inet.h>
 
 void network_worker::worker_method() {
     /*
@@ -41,8 +43,6 @@ bool network_worker::process_nqi(network_queue_item &network_queue_item) {
     }
     switch (network_queue_item.action) {
         case (nq_none): {
-
-
             timestamp_t t = get_time();
             // First check if we are close to timing out:
             if (timeout > 0 && t - last_recv > timeout) {
@@ -105,22 +105,37 @@ ssize_t network_worker::do_recv(int fd, char *b, size_t nbytes) {
 }
 
 void network_worker::fail_connection() {
-    close(connfd);
-    connfd = -1;
+    close(connfd_tcp);
+    if (connfd_udp != -1) {
+        close(connfd_udp);
+    }
+    connfd_tcp = -1;
+    connfd_udp = -1;
     pf.fd = -1;
 
     connected = false;
 }
 
 void network_worker::open_connection() {
-    connfd = wait_for_connection(port, NULL);
-    if (connfd < 0)
-        std::cerr << "Could not open connection fd." << std::endl;
+    struct sockaddr_in sa;
+    connfd_tcp = wait_for_connection(port, (struct sockaddr *) &sa);
+    if (connfd_tcp < 0)
+        std::cerr << "Could not open TCP connection fd." << std::endl;
+
+    if (config_map["Server.Protocol"].as<std::string>() == "UDP") {
+        connfd_udp = socket(AF_INET, SOCK_DGRAM, 0);
+        sa.sin_port = htons(port); //Destination UDP port is same as listening TCP port
+        if (connect(connfd_udp,(struct sockaddr *) &sa,sizeof(sa))) {
+            connfd_udp = -1;
+            std::cerr << "Could not open UDP connection fd." << std::endl;
+        }
+        std::cout << "Successfully opened UDP socket on " << connfd_udp << "." << std::endl;
+    }
 
     /*
      * Stuff used to poll the socket:
      */
-    pf.fd = connfd;
+    pf.fd = connfd_tcp;
 
     /*
      * Update the last received and mark that we are connected:
@@ -134,8 +149,13 @@ ssize_t network_worker::send_header(send_code h, size_t nbytes) {
     send_header_t sh;
     sh.code = h;
     sh.nbytes = nbytes;
-   
-    ssize_t result = write(connfd, &sh, sizeof(sh));
+
+    // If the UDP Socket is setup, use it.
+    if (connfd_udp != -1) {
+        ssize_t result = write(connfd_udp, &sh, sizeof(sh));
+    } else {
+        ssize_t result = write(connfd_tcp, &sh, sizeof(sh));
+    }
 }
 
 ssize_t rwrite(int fd, void *b, size_t n) {

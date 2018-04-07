@@ -17,7 +17,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
     switch (nqi.action) {
         case (nq_recv): {
             //Poll before we read:
-            read_result = do_recv(connfd, &c, 1);
+            read_result = do_recv(connfd_tcp, &c, 1);
             if (read_result <= 0) {
                 //FIXME, do something better?
                 return true;
@@ -53,9 +53,10 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
             send_code h = (send_code) nqi.data[0];
 
             // TODO this header should correspond to something from the nqi data.
-            network_worker::send_header(h, nqi.nbytes);
 
+            network_worker::send_header(h, nqi.nbytes);
             logger.debug("Writing data: Nbytes: " + std::to_string(nqi.nbytes) + " Type: " + std::to_string(h));
+            int connfd = (connfd_udp != -1) ? connfd_udp : connfd_tcp; //Use UDP if the socket is configured
             if (buff->write_data(connfd, nqi.nbytes, nqi.total_bytes) != 0) {
                 std::cerr << "Connection Closed" << std::endl;
                 //exit(0);

@@ -20,7 +20,8 @@
 class network_worker : public worker {
     public:
         int port;
-        int connfd;
+        int connfd_tcp;
+        int connfd_udp;
         bool connected;
 
         /**
@@ -46,7 +47,8 @@ class network_worker : public worker {
                 , port(port)
                 , last_recv(0)
                 , timeout(timeout)
-                , connfd(-1)
+                , connfd_tcp(-1)
+                , connfd_udp(-1)
         {
                 last_recv = get_time() - timeout; // Set the last time such that we are immediately timed out.
         };
