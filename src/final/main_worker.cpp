@@ -49,6 +49,7 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
             }
         }
     }
+    return;
 }
 
 static timestamp_t start_time_nitr = 0;

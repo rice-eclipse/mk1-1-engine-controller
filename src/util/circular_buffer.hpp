@@ -38,6 +38,15 @@ class circular_buffer {
         void add_data(void *p, size_t n);
 
         /**
+         * Copies data into *dest, which will be written.
+         * @param dest destination buffer.
+         * @param n number of bytes to copy.
+         * @param offset first byte in data we want to copy to dest.
+         * @return
+         */
+        bool copy_data(char *dest, size_t n, size_t offset);
+
+        /**
          * Writes n bytes to fd.
          * @param fd an open file descriptor.
          * @param n number of bytes to write.

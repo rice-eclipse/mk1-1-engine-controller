@@ -145,6 +145,14 @@ void network_worker::open_connection() {
     last_recv = get_time();
 }
 
+send_header_t* network_worker::prepare_header(send_code h, size_t nbytes) {
+    send_header_t sh;
+    sh.code = h;
+    sh.nbytes = nbytes;
+
+    return &sh;
+}
+
 ssize_t network_worker::send_header(send_code h, size_t nbytes) {
     send_header_t sh;
     sh.code = h;

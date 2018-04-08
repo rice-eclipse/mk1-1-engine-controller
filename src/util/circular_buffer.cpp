@@ -29,6 +29,39 @@ void circular_buffer::add_data(void *p, size_t n) {
         this->add_data((char *)p + to_add, n);
 }
 
+bool circular_buffer::copy_data(char *dest, size_t n, size_t offset) {
+    if (n == 0) {
+        return false;
+    }
+    if (n > this->nbytes) {
+        std::cerr << "n (" << n << ") is larger than buffer size (" << this->nbytes << ")" << std::endl;
+        return false;
+    }
+
+    size_t bw = bytes_written.load();
+
+    if ((long) offset <  (long) (bw - this->nbytes)) {
+        std::cerr << "Bytes already overwritten before sending: Num_to_write:" << n
+                  << " Offset:" << offset
+                  << " Total bytes written into buffer" << bw
+                  << " Total buffer size: " << nbytes << std::endl;
+        //return -1; //TODO don't collide with write error?
+    }
+
+    size_t right_bytes = nbytes - offset; // Number of bytes to the right of offset
+    size_t right_copy = right_bytes >= n ? n : right_bytes; // Take the smaller value in case we wrap around
+
+//    size_t to_send = nbytes - offset % this->nbytes; // The distance between start and the end of the buffer.
+//    to_send = to_send > n ? n : to_send; //Take the minimum value of n and to_send.
+
+    std::memcpy(dest, this->data + offset, right_copy);
+    if (right_copy == right_bytes) { // If the data we want to copy wraps around
+        // copy remaining num of bytes from the beginning
+        std::memcpy(dest + right_copy, this->data, n - right_copy);
+    }
+    return true;
+}
+
 ssize_t circular_buffer::write_data(int fd, size_t n, size_t offset) {
     if (n == 0) {
         return 0;
