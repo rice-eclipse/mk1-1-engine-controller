@@ -26,7 +26,8 @@ po::variables_map init_config(unsigned int *port, unsigned int *preignite_ms, un
         ("Control.Hotflow_ms",  po::value<unsigned int>(hotflow_ms)->required(), "set milliseconds before beginning hotflow")
     ;
 
-    std::ifstream in("config.ini");
+    //todo change dir if needed
+    std::ifstream in("/home/eclipse/CLionProjects/mk1-1-engine-controller/cmake-build-debug/src/final/config.ini");
     po::store(po::parse_config_file(in, desc), config_map);
     in.close();
     po::notify(config_map);

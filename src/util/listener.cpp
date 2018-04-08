@@ -60,8 +60,7 @@ open_listen(int port)
     return listenfd;
 }
 
-int
-wait_for_connection(int port, sockaddr *sa) {
+int wait_for_connection(int port, sockaddr *sa) {
     socklen_t clientlen;
     int listenfd, connfd;
     /* Acquire a port, and make sure we got it successfully. */
