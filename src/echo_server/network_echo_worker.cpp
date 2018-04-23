@@ -14,7 +14,7 @@ bool network_echo_worker::process_nqi(network_queue_item &nqi) {
 
     switch (nqi.action) {
         case (nq_recv): {
-            read_result = do_recv(connfd, &c, 1);
+            read_result = do_recv(connfd_tcp, &c, 1);
             if (read_result <= 0) {
                 //FIXME, do something better?
                 return true;
@@ -37,7 +37,7 @@ bool network_echo_worker::process_nqi(network_queue_item &nqi) {
             }
             c = nqi.data[0];
             network_worker::send_header(text, 1);
-            write(connfd, &c, 1);
+            write(connfd_tcp, &c, 1);
             return true;
 
         }

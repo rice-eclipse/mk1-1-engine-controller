@@ -30,7 +30,8 @@ po::variables_map init_config(unsigned int *port, bool *use_gitvc, std::vector<i
     ;
 
     //todo change dir if needed
-    std::ifstream in("/home/eclipse/CLionProjects/mk1-1-engine-controller/cmake-build-debug/src/final/config.ini");
+    // std::ifstream in("/home/eclipse/CLionProjects/mk1-1-engine-controller/cmake-build-debug/src/final/config.ini");
+    std::ifstream in("/home/eclipse/CLionProjects/mk1-1-engine-controller/src/final/config.ini");
     po::store(po::parse_config_file(in, desc), config_map);
     in.close();
     po::notify(config_map);

@@ -161,7 +161,7 @@ void main_worker::worker_method() {
                     if (ti->action == pt_comb && pressure_shutoff) {
                         // todo calibrate adcd.dat first
                         // For y = mx+b, m=-0.36002  b=1412.207
-                        double pt_cal = 0.2810327855 * adc_data.dat - 1068.22;
+                        double pt_cal = -0.2810327855 * adc_data.dat + 1068.22;
                         pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05;
 
                         if ((pressure_avg > 800 || pressure_avg < 300) && burn_on) {
