@@ -47,11 +47,11 @@ class timed_item_list {
                     timed_item(0, LC3_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 3), lc3, true, 0);
 
             pt_inje_ti =
-                    timed_item(0, PT_FEED_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 1), pt_feed, true, 0);
+                    timed_item(0, PT_INJE_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 1), pt_inje, true, 0);
             pt_comb_ti =
-                    timed_item(0, PT_INJE_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 2), pt_inje, true, 0);
+                    timed_item(0, PT_COMB_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 2), pt_comb, true, 0);
             pt_feed_ti =
-                    timed_item(0, PT_COMB_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 0), pt_comb, true, 0);
+                    timed_item(0, PT_FEED_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 0), pt_feed, true, 0);
 
             tc1_ti =
                     timed_item(0, TC1_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 4), tc1, true, 0);
