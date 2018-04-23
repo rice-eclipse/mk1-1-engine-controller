@@ -12,7 +12,7 @@
 #include "timed_item.hpp"
 #include "timed_item_list.hpp"
 
-#define SEND_TIME 100000 //Send every 100ms.
+#define SEND_TIME 500000 //Send every 500ms.
 
 network_queue_item null_nqi = {nq_none}; //An item for null args to
 work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
