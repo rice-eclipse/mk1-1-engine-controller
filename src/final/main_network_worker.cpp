@@ -4,6 +4,8 @@
 
 
 #include <iostream>
+#include <cstring>
+#include <unistd.h>
 #include "main_network_worker.hpp"
 #include "../util/logger.hpp"
 
@@ -11,13 +13,14 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
     char c;
     work_queue_item wqi;
     ssize_t read_result;
+    // char* combined_buff = new char[1 << 12];
 
     Logger logger("logs/nw.log", "network thread", LOG_INFO);
 
     switch (nqi.action) {
         case (nq_recv): {
             //Poll before we read:
-            read_result = do_recv(connfd, &c, 1);
+            read_result = do_recv(connfd_tcp, &c, 1);
             if (read_result <= 0) {
                 //FIXME, do something better?
                 return true;
@@ -53,9 +56,33 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
             send_code h = (send_code) nqi.data[0];
 
             // TODO this header should correspond to something from the nqi data.
+
             network_worker::send_header(h, nqi.nbytes);
 
+//            std::cerr << "Preparing header" << std::endl;
+//
+//            send_header_t sh = (send_header_t) {h, nqi.nbytes};
+//
+//            //send_header_t* header = network_worker::prepare_header(h, nqi.nbytes);
+//
+//            std::cerr << "Preparing to copy header" << std::endl;
+//
+//            std::memcpy(combined_buff, &sh, sizeof(send_header_t));
+//
+//            std::cerr << "Copying header complete" << std::endl;
+//
+//            if (!buff->copy_data(combined_buff + sizeof(send_header_t), nqi.nbytes, nqi.total_bytes)) {
+//                std::cerr << "Copy bytes from buffer failed!" << std::endl;
+//            }
+
             logger.debug("Writing data: Nbytes: " + std::to_string(nqi.nbytes) + " Type: " + std::to_string(h));
+            int connfd = (connfd_udp != -1) ? connfd_udp : connfd_tcp; //Use UDP if the socket is configured
+
+//            ssize_t bytes_written = 0;
+//            if ((bytes_written = write(connfd, combined_buff, nqi.nbytes)) != nqi.nbytes) {
+//                std:: cerr << "Incorrect number of bytes written: " << "Expected " << nqi.nbytes << ", Actual " << bytes_written << std::endl;
+//            }
+
             if (buff->write_data(connfd, nqi.nbytes, nqi.total_bytes) != 0) {
                 std::cerr << "Connection Closed" << std::endl;
                 //exit(0);

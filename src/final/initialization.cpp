@@ -22,11 +22,14 @@ void initialize_pins() {
     bcm2835_gpio_fsel(MAIN_VALVE, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(MAIN_VALVE, LOW);
 
-    bcm2835_gpio_fsel(VALVE_2, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_write(VALVE_2, LOW);
+    bcm2835_gpio_fsel(WATER_VALVE, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(WATER_VALVE, LOW);
 
     bcm2835_gpio_fsel(VALVE_3, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(VALVE_3, LOW);
+
+    bcm2835_gpio_fsel(GITVC_VALVE, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(GITVC_VALVE, LOW);
 
     bcm2835_gpio_fsel(IGN_START, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(IGN_START, LOW);

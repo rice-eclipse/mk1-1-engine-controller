@@ -10,6 +10,7 @@
 #include "../util/logger.hpp"
 #include "main_buff_logger.hpp"
 #include "timed_item.hpp"
+#include "timed_item_list.hpp"
 
 #define SEND_TIME 500000 //Send every 500ms.
 
@@ -17,17 +18,24 @@ network_queue_item null_nqi = {nq_none}; //An item for null args to
 work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
 adc_reading adc_data = {};
 
-static int ti_count = 12;
-size_t buff_size = 2 << 20; // About 5 minutes
+static int ti_count = 13;
+int gitvc_count = 0;
+int time_between_gitvc = 200000;
+bool gitvc_on;
 timestamp_t now = 0;
-timed_item ti_list[MAX_TIMED_LIST_LEN];
-int preignite_us = IGN2_T;
-int hotflow_us = IGN3_T;
+// timed_item ti_list[MAX_TIMED_LIST_LEN];
+timed_item_list* ti_list = new timed_item_list(ti_count, 2 << 20);
+
+int preignite_us = 750000;
+int hotflow_us = 7000000;
+bool pressure_shutoff = true;
+bool use_gitvc = false;
+std::vector<int> gitvc_times{};
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
-        if (ti_list[i].action == wq_none) {
-            ti_list[i] = ti;
+        if (ti_list->tis[i].action == wq_none) {
+            ti_list->tis[i] = ti;
             ti_count++;
             return;
         }
@@ -38,69 +46,38 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
     int i, ti_seen = 0;
     work_queue_item wqi = {};
     for (i = 0; i < MAX_TIMED_LIST_LEN && ti_seen < ti_count; i++) {
-        if (ti_list[i].action != wq_none) {
+        if (ti_list->tis[i].action != wq_none) {
             ti_seen++;
-            if (ti_list[i].enabled && t > ti_list[i].scheduled && t - ti_list[i].scheduled > ti_list[i].time_delay) {
+            if (ti_list->tis[i].enabled && t > ti_list->tis[i].scheduled && t - ti_list->tis[i].scheduled > ti_list->tis[i].time_delay) {
                 // Add this to the list of items to process:
                 wqi.action = wq_timed;
-                wqi.extra_datap = &ti_list[i];
+                wqi.extra_datap = &ti_list->tis[i];
                 qw.enqueue(wqi);
             }
         }
     }
+    return;
 }
 
 static timestamp_t start_time_nitr = 0;
 static double pressure_avg = 700;
 static bool burn_on = false;
+int dont_crash = 0;
 
 void main_worker::worker_method() {
-    // In case we need to reference the timed items individually
-    timed_item lc_main_ti =
-            timed_item(now, LC_MAIN_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 0), lc_main, true, now);
-    timed_item lc1_ti =
-            timed_item(now, LC1_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 1), lc1, true, now);
-    timed_item lc2_ti =
-            timed_item(now, LC2_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 2), lc2, true, now);
-    timed_item lc3_ti =
-            timed_item(now, LC3_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 3), lc3, true, now);
-
-    timed_item pt_inje_ti =
-            timed_item(now, PT_FEED_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 1), pt_feed, true, now);
-    timed_item pt_comb_ti =
-            timed_item(now, PT_INJE_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 2), pt_inje, true, now);
-    timed_item pt_feed_ti =
-            timed_item(now, PT_COMB_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 0), pt_comb, true, now);
-
-    timed_item tc1_ti =
-            timed_item(now, TC1_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 4), tc1, true, now);
-    timed_item tc2_ti =
-            timed_item(now, TC2_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 5), tc2, true, now);
-    timed_item tc3_ti =
-            timed_item(now, TC3_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 6), tc3, true, now);
-
-    timed_item ign2_ti =
-            timed_item(now, preignite_us, nullptr, adc_info_t(), ign2, false, now);
-    timed_item ign3_ti =
-            timed_item(now, hotflow_us, nullptr, adc_info_t(), ign3, false, now);
-
-    // Copy the values into ti_list. There might be a better way to do this.
-    timed_item temp_ti_list[] = {lc_main_ti, lc1_ti, lc2_ti, lc3_ti, pt_inje_ti, pt_comb_ti, pt_feed_ti, tc1_ti, tc2_ti,
-                                 tc3_ti, ign2_ti, ign3_ti};
-    std::copy(temp_ti_list, temp_ti_list + 12, ti_list);
-
     network_queue_item nq_item = {};
     work_queue_item wq_item = {};
     char c;
+    int count = 0;
 
     // Create a Logger for this thread.
-    Logger logger("logs/main_worker.log", "main_worker", LOG_INFO);
+    Logger logger("logs/main_worker.log", "main_worker", LOG_DEBUG);
 
     logger.info("Beginning main data worker.");
 
-    assert(ti_list[0].adc_info.pin == LC_ADC);
-    while (1) {
-        assert(ti_list[0].buffer != NULL);
+    // assert(ti_list[0].adc_info.pin == LC_ADC);
+    while (true) {
+        // assert(ti_list[0].buffer != NULL);
         //std::cout << "Backworker entering loop:\n";
         wq_item = qw.poll();
         logger.debugv("Data worker got work item: " + std::to_string(wq_item.action));
@@ -181,7 +158,7 @@ void main_worker::worker_method() {
                     //usleep(100);
                     //FIXME switch this.
 
-                    if (ti->action == pt_comb) {
+                    if (ti->action == pt_comb && pressure_shutoff) {
                         // todo calibrate adcd.dat first
                         // For y = mx+b, m=-0.36002  b=1412.207
                         double pt_cal = 0.2810327855 * adc_data.dat - 1068.22;
@@ -225,19 +202,31 @@ void main_worker::worker_method() {
                         write_from_nqi(nq_item);
                         break;
                     }
-                } else { // Handle the case of using ignition stuff. //todo this naming is confusing
+                } else { // Handle the case of using ignition stuff.
                     if (ti->action == ign2) {
                         // ign2_ti.disable();
                         // ign3_ti.enable(now);
 
-                        ti_list[10].disable();
-                        ti_list[11].enable(now);
+                        // ti_list->tis[10].disable();
+                        // ti_list->tis[11].enable(now);
+
+                        ti_list->disable(ign2);
+                        ti_list->enable(ign3, now);
 
                         logger.info("Writing main valve on from timed item.", now);
 
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         start_time_nitr = now;
                         burn_on = true;
+
+                        if (use_gitvc && gitvc_times.size() > gitvc_count) {
+                            ti_list->set_delay(gitvc, gitvc_times.at(0));
+                            ti_list->enable(gitvc, now + 2000000);
+                            logger.info("Setting first GITVC for " + std::to_string(gitvc_times.at(0)) + " microseconds.", now);
+                            gitvc_on = true;
+                            gitvc_count++;
+                          }
+
                         break;
                         // Enable the second igntion thing:
                         // TODO
@@ -249,11 +238,45 @@ void main_worker::worker_method() {
                         bcm2835_gpio_write(MAIN_VALVE, LOW);
 
                         // ign3_ti.disable();
-                        ti_list[11].disable();
+                        // ti_list->tis[11].disable();
+                        ti_list->disable(ign3);
 
                         logger.debug("Writing ignition off from timed item.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
+
+
+                        ti_list->disable(gitvc);
+                        logger.debug("Writing GITVC off from timed item.", now);
+                        bcm2835_gpio_write(GITVC_VALVE, LOW);
                         break;
+                    }
+                    if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
+
+                        if (gitvc_on) { // Currently on, so turn it off
+                            // ti_list->disable(gitvc);
+
+                            // Disable current GITVC
+                            bcm2835_gpio_write(GITVC_VALVE, LOW);
+                            gitvc_on = false;
+                            logger.debug("Writing GITVC off from timed item for " + std::to_string(time_between_gitvc) + " microseconds", now);
+
+                            // Use ti to turn on new GITVC in after time_between_gitvc time passes
+                            ti_list->set_delay(gitvc, time_between_gitvc);
+                            ti_list->enable(gitvc, now);
+                        } else if (gitvc_times.size() > gitvc_count){ // Currently off, so turn it on
+                            // ti_list->disable(gitvc);
+
+                            // Re-enable GITVC
+                            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+                            gitvc_on = true;
+                            logger.debug("Writing GITVC on from timed item for " + std::to_string(gitvc_times.at(gitvc_count)) + " microseconds", now);
+
+                            // Use ti to turn off current GITVC after gitvc_times.at(gitvc_count) time passes
+                            ti_list->set_delay(gitvc, gitvc_times.at(gitvc_count));
+                            ti_list->enable(gitvc, now);
+
+                            gitvc_count++;
+                        }
                     }
                 }
                 break;
@@ -266,7 +289,8 @@ void main_worker::worker_method() {
 
                 //todo original was timed_list[10], which is now ign2_ti?
                 // ign2_ti.enable(now);
-                ti_list[10].enable(now);
+                // ti_list->tis[10].enable(now);
+                ti_list->enable(ign2, now);
                 break;
             }
             case (wq_none): {
@@ -278,8 +302,7 @@ void main_worker::worker_method() {
                 logger.error("Work queue item not handled:" + std::to_string(wq_item.action), now);
                 break;
             }
-
         }
+        dont_crash++;
     }
-
 }

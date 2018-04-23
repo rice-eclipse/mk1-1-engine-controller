@@ -11,8 +11,9 @@ extern RPiGPIOPin ADC_1_CS;
 extern RPiGPIOPin ADC_2_CS;
 
 extern RPiGPIOPin MAIN_VALVE;
-extern RPiGPIOPin VALVE_2;
+extern RPiGPIOPin WATER_VALVE;
 extern RPiGPIOPin VALVE_3;
+extern RPiGPIOPin GITVC_VALVE;
 extern RPiGPIOPin IGN_START;
 
 extern RPiGPIOPin LC_ADC;

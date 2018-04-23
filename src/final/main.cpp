@@ -11,7 +11,9 @@
 #include "../server/queue_items.hpp"
 #include "../server/safe_queue.hpp"
 #include "main_worker.hpp"
+#include "ini_config.hpp"
 #include "main_network_worker.hpp"
+#include "timed_item_list.hpp"
 
 circular_buffer buff(CIRC_SIZE);
 
@@ -27,16 +29,17 @@ circular_buffer buff(CIRC_SIZE);
  * @return 0 unless an error occurs.
  */
 int main(int argc, char **argv) {
-    // Validate the arguments. TODO use a real argparse library
-    int port, result;
-    if (argc != 4) {
-        std::cerr << "Incorrect number of arguments. Usage final <port> <preignite_milliseconds> <hotflow_milliseconds>" << std::endl;
-        return 1;
-    }
+    unsigned int port, preignite_ms, hotflow_ms;
+    bool temp_pressure_shutoff;
+    std::vector<int> temp_gitvc_times;
+    int result;
 
-    port = atoi(argv[1]);
-    preignite_us = atoi(argv[2]) * 1000;
-    hotflow_us = atoi(argv[3]) * 1000;
+    init_config(&port, &use_gitvc, &gitvc_times, &pressure_shutoff, &preignite_ms, &hotflow_ms);
+
+    std::cout << gitvc_times.at(0) << std::endl;
+
+    preignite_us = preignite_ms * 1000;
+    hotflow_us = hotflow_ms * 1000;
 
     if (preignite_us < 0 || preignite_us > 5000000) {
         std::cerr << "Incorrect preignite time." << std::endl;
