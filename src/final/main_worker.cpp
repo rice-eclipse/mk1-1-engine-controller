@@ -149,11 +149,16 @@ void main_worker::worker_method() {
 
                 if (ti->buffer != NULL) {
                     //TODO make a Logger call to debugv
-                    /*
+                    /* 
                     std::cout << "Reading adc please work" << ti->adc_info.pin << " "
-                                << ti->adc_info.single_channel << " " << ti->adc_info.channel << std::endl;
-                                */
+                                << ti->adc_info.single_channel << " " << (int) ti->adc_info.channel << std::endl;
+                              
+                    std::cout << "Testing ADC read from ADC 2: " << \
+                        adcs.read_item(ti->adc_info.pin, true, ti->adc_info.channel) << std::endl;
+                    */
                     adc_data.dat = adcs.read_item(ti->adc_info);
+                    //adc_data.dat = adcs.read_item(2, ti->adc_info.single_channel, ti->adc_info.channel);
+                    //std::cout << "Read value from ADC: " << adc_data.dat << std::endl;
                     //adc_data.dat = count++;
                     //usleep(100);
                     //FIXME switch this.

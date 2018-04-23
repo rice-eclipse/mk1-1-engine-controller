@@ -80,6 +80,10 @@ int main(int argc, char **argv) {
     adcs.register_pin(1, ADC_1_CS);
     adcs.register_pin(2, ADC_2_CS);
 
+    // Check that we can read from an ADC:
+    std::cout << "Testing ADC read from ADC 2: " << adcs.read_item(2, true, 0) << std::endl;
+    std::cout << "Testing ADC read from LC_ADC alt: " << adcs.read_item(adc_info_t(LC_ADC, true, 0)) << std::endl;
+
     // Set the base time so that we have no risk of overflow.
     set_base_time();
 
