@@ -20,7 +20,7 @@ adc_reading adc_data = {};
 
 static int ti_count = 13;
 int gitvc_count = 0;
-int time_between_gitvc = 100;
+int time_between_gitvc = 200000;
 bool gitvc_on;
 timestamp_t now = 0;
 // timed_item ti_list[MAX_TIMED_LIST_LEN];
@@ -221,7 +221,7 @@ void main_worker::worker_method() {
 
                         if (use_gitvc && gitvc_times.size() > gitvc_count) {
                             ti_list->set_delay(gitvc, gitvc_times.at(0));
-                            ti_list->enable(gitvc, now);
+                            ti_list->enable(gitvc, now + 2000000);
                             logger.info("Setting first GITVC for " + std::to_string(gitvc_times.at(0)) + " microseconds.", now);
                             gitvc_on = true;
                             gitvc_count++;
@@ -247,7 +247,7 @@ void main_worker::worker_method() {
 
                         ti_list->disable(gitvc);
                         logger.debug("Writing GITVC off from timed item.", now);
-                        bcm2835_gpio_write(VALVE_2, LOW);
+                        bcm2835_gpio_write(GITVC_VALVE, LOW);
                         break;
                     }
                     if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
@@ -256,7 +256,7 @@ void main_worker::worker_method() {
                             // ti_list->disable(gitvc);
 
                             // Disable current GITVC
-                            bcm2835_gpio_write(VALVE_2, LOW);
+                            bcm2835_gpio_write(GITVC_VALVE, LOW);
                             gitvc_on = false;
                             logger.debug("Writing GITVC off from timed item for " + std::to_string(time_between_gitvc) + " microseconds", now);
 
@@ -267,7 +267,7 @@ void main_worker::worker_method() {
                             // ti_list->disable(gitvc);
 
                             // Re-enable GITVC
-                            bcm2835_gpio_write(VALVE_2, HIGH);
+                            bcm2835_gpio_write(GITVC_VALVE, HIGH);
                             gitvc_on = true;
                             logger.debug("Writing GITVC on from timed item for " + std::to_string(gitvc_times.at(gitvc_count)) + " microseconds", now);
 
