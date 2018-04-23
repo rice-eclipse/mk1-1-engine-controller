@@ -11,6 +11,9 @@
 #include "../util/timestamps.hpp"
 #include "main_network_worker.hpp"
 
+extern bool pressure_shutoff;
+extern bool use_gitvc;
+extern std::vector<int> gitvc_times;
 extern int preignite_us; // microseconds to run ignition before flow.
 extern int hotflow_us; // microseconds to run hot flow.
 

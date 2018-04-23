@@ -29,6 +29,7 @@ enum work_queue_item_action {
     ign1,
     ign2,
     ign3,
+    gitvc
 };
 
 enum network_queue_item_action {

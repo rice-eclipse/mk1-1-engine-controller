@@ -13,6 +13,7 @@
 #include "main_worker.hpp"
 #include "ini_config.hpp"
 #include "main_network_worker.hpp"
+#include "timed_item_list.hpp"
 
 circular_buffer buff(CIRC_SIZE);
 
@@ -29,9 +30,13 @@ circular_buffer buff(CIRC_SIZE);
  */
 int main(int argc, char **argv) {
     unsigned int port, preignite_ms, hotflow_ms;
+    bool temp_pressure_shutoff;
+    std::vector<int> temp_gitvc_times;
     int result;
 
-    init_config(&port,&preignite_ms,&hotflow_ms);
+    init_config(&port, &use_gitvc, &gitvc_times, &pressure_shutoff, &preignite_ms, &hotflow_ms);
+
+    std::cout << gitvc_times.at(0) << std::endl;
 
     preignite_us = preignite_ms * 1000;
     hotflow_us = hotflow_ms * 1000;

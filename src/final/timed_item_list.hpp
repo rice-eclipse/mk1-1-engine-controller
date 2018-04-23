@@ -7,6 +7,7 @@
 
 #include "timed_item.hpp"
 #include "pins.hpp"
+#include "main_worker.hpp"
 #include <map>
 
 class timed_item_list {
@@ -27,6 +28,7 @@ class timed_item_list {
         timed_item tc3_ti;
         timed_item ign2_ti;
         timed_item ign3_ti;
+        timed_item gitvc_ti;
         // todo add timed items for mk2
 
         // timed_item_list() = default;
@@ -58,15 +60,15 @@ class timed_item_list {
             tc3_ti =
                     timed_item(0, TC3_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 6), tc3, true, 0);
 
-            ign2_ti =
-                    timed_item(0, IGN2_T, nullptr, adc_info_t(), ign2, false, 0);
-            ign3_ti =
-                    timed_item(0, IGN3_T, nullptr, adc_info_t(), ign3, false, 0);
+            ign2_ti = timed_item(0, preignite_us, nullptr, adc_info_t(), ign2, false, 0);
+            ign3_ti = timed_item(0, hotflow_us, nullptr, adc_info_t(), ign3, false, 0);
+
+            gitvc_ti = timed_item(0, 10000, nullptr, adc_info_t(), gitvc, false, 0);
 
 
             timed_item temp_ti_list[] = {lc_main_ti, lc1_ti, lc2_ti, lc3_ti, pt_inje_ti, pt_comb_ti, pt_feed_ti, tc1_ti, tc2_ti,
-                                         tc3_ti, ign2_ti, ign3_ti};
-            std::copy(temp_ti_list, temp_ti_list + 12, tis);
+                                         tc3_ti, ign2_ti, ign3_ti, gitvc_ti};
+            std::copy(temp_ti_list, temp_ti_list + 13, tis);
 
             for (int i = 0; i < length; i++) {
                 actionMap.insert(std::pair<work_queue_item_action, int>(tis[i].action, i));
@@ -78,6 +80,8 @@ class timed_item_list {
         void enable (work_queue_item_action ti, timestamp_t now);
 
         void disable(work_queue_item_action ti);
+
+        void set_delay(work_queue_item_action ti, timestamp_t new_delay);
 
         bool get_status(work_queue_item_action ti);
 

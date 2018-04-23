@@ -18,12 +18,19 @@ network_queue_item null_nqi = {nq_none}; //An item for null args to
 work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
 adc_reading adc_data = {};
 
-static int ti_count = 12;
+static int ti_count = 13;
+int gitvc_count = 0;
+int time_between_gitvc = 100;
+bool gitvc_on;
 timestamp_t now = 0;
 // timed_item ti_list[MAX_TIMED_LIST_LEN];
 timed_item_list* ti_list = new timed_item_list(ti_count, 2 << 20);
-int preignite_us = IGN2_T;
-int hotflow_us = IGN3_T;
+
+int preignite_us = 750000;
+int hotflow_us = 7000000;
+bool pressure_shutoff = true;
+bool use_gitvc = false;
+std::vector<int> gitvc_times{};
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
@@ -55,6 +62,7 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
 static timestamp_t start_time_nitr = 0;
 static double pressure_avg = 700;
 static bool burn_on = false;
+int dont_crash = 0;
 
 void main_worker::worker_method() {
     network_queue_item nq_item = {};
@@ -63,7 +71,7 @@ void main_worker::worker_method() {
     int count = 0;
 
     // Create a Logger for this thread.
-    Logger logger("logs/main_worker.log", "main_worker", LOG_INFO);
+    Logger logger("logs/main_worker.log", "main_worker", LOG_DEBUG);
 
     logger.info("Beginning main data worker.");
 
@@ -150,7 +158,7 @@ void main_worker::worker_method() {
                     //usleep(100);
                     //FIXME switch this.
 
-                    if (ti->action == pt_comb) {
+                    if (ti->action == pt_comb && pressure_shutoff) {
                         // todo calibrate adcd.dat first
                         // For y = mx+b, m=-0.36002  b=1412.207
                         double pt_cal = 0.2810327855 * adc_data.dat - 1068.22;
@@ -194,7 +202,7 @@ void main_worker::worker_method() {
                         write_from_nqi(nq_item);
                         break;
                     }
-                } else { // Handle the case of using ignition stuff. //todo this naming is confusing
+                } else { // Handle the case of using ignition stuff.
                     if (ti->action == ign2) {
                         // ign2_ti.disable();
                         // ign3_ti.enable(now);
@@ -210,6 +218,15 @@ void main_worker::worker_method() {
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         start_time_nitr = now;
                         burn_on = true;
+
+                        if (use_gitvc && gitvc_times.size() > gitvc_count) {
+                            ti_list->set_delay(gitvc, gitvc_times.at(0));
+                            ti_list->enable(gitvc, now);
+                            logger.info("Setting first GITVC for " + std::to_string(gitvc_times.at(0)) + " microseconds.", now);
+                            gitvc_on = true;
+                            gitvc_count++;
+                          }
+
                         break;
                         // Enable the second igntion thing:
                         // TODO
@@ -226,7 +243,40 @@ void main_worker::worker_method() {
 
                         logger.debug("Writing ignition off from timed item.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
+
+
+                        ti_list->disable(gitvc);
+                        logger.debug("Writing GITVC off from timed item.", now);
+                        bcm2835_gpio_write(VALVE_2, LOW);
                         break;
+                    }
+                    if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
+
+                        if (gitvc_on) { // Currently on, so turn it off
+                            // ti_list->disable(gitvc);
+
+                            // Disable current GITVC
+                            bcm2835_gpio_write(VALVE_2, LOW);
+                            gitvc_on = false;
+                            logger.debug("Writing GITVC off from timed item for " + std::to_string(time_between_gitvc) + " microseconds", now);
+
+                            // Use ti to turn on new GITVC in after time_between_gitvc time passes
+                            ti_list->set_delay(gitvc, time_between_gitvc);
+                            ti_list->enable(gitvc, now);
+                        } else if (gitvc_times.size() > gitvc_count){ // Currently off, so turn it on
+                            // ti_list->disable(gitvc);
+
+                            // Re-enable GITVC
+                            bcm2835_gpio_write(VALVE_2, HIGH);
+                            gitvc_on = true;
+                            logger.debug("Writing GITVC on from timed item for " + std::to_string(gitvc_times.at(gitvc_count)) + " microseconds", now);
+
+                            // Use ti to turn off current GITVC after gitvc_times.at(gitvc_count) time passes
+                            ti_list->set_delay(gitvc, gitvc_times.at(gitvc_count));
+                            ti_list->enable(gitvc, now);
+
+                            gitvc_count++;
+                        }
                     }
                 }
                 break;
@@ -253,6 +303,6 @@ void main_worker::worker_method() {
                 break;
             }
         }
+        dont_crash++;
     }
-
 }

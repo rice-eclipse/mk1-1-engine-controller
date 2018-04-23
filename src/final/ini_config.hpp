@@ -11,7 +11,7 @@
 namespace po = boost::program_options;
 
 
-po::variables_map init_config(unsigned int *port, unsigned int *preignite_ms, unsigned int *hotflow_ms);
+po::variables_map init_config(unsigned int *port, bool *use_gitvc, std::vector<int> *gitvc_times, bool *pressure_shutoff, unsigned int *preignite_ms, unsigned int *hotflow_ms);
 
 // Global variables_map for accessing config values
 extern po::variables_map config_map;
