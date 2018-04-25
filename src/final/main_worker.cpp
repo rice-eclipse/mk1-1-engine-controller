@@ -24,7 +24,7 @@ int time_between_gitvc = 200000;
 bool gitvc_on;
 timestamp_t now = 0;
 // timed_item ti_list[MAX_TIMED_LIST_LEN];
-timed_item_list* ti_list = new timed_item_list(ti_count, 2 << 20);
+timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
 int preignite_us = 750000;
 int hotflow_us = 7000000;
@@ -103,15 +103,25 @@ void main_worker::worker_method() {
                         break;
                     }
                     case unset_valve: {
-                        logger.info("Writing main valve off.", now);
+                        logger.info("Writing main valve off on pin " + std::to_string(MAIN_VALVE), now);
                         bcm2835_gpio_write(MAIN_VALVE, LOW);
                         break;
                     }
                     case set_valve: {
-                        logger.info("Writing main valve on.", now);
+                        logger.info("Writing main valve on on pin " + std::to_string(MAIN_VALVE), now);
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         break;
                     }
+		    case set_water: {
+			logger.info("Turning water on on pin " + std::to_string(WATER_VALVE), now);
+			bcm2835_gpio_write(WATER_VALVE, HIGH);
+			break;
+		    }
+		    case unset_water: {
+			logger.info("Turning water off on pin " + std::to_string(WATER_VALVE), now);
+			bcm2835_gpio_write(WATER_VALVE, LOW);
+			break;
+		    }
                     case unset_ignition: {
                         logger.info("Writing ignition off.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
@@ -172,9 +182,9 @@ void main_worker::worker_method() {
                         if ((pressure_avg > 800 || pressure_avg < 300) && burn_on) {
                             // Start after 1000ms = 1s.
                             if (now - start_time_nitr > 1000000) {
-                                //abcd
+                                // GITVC is active low
                                 logger.error("Pressure shutoff. Closing main valve and unsetting ignition.", now);
-                                bcm2835_gpio_write(MAIN_VALVE, LOW);
+                                bcm2835_gpio_write(MAIN_VALVE, HIGH);
                                 bcm2835_gpio_write(IGN_START, LOW);
                                 burn_on = false;
                             }
@@ -228,7 +238,8 @@ void main_worker::worker_method() {
                             ti_list->set_delay(gitvc, gitvc_times.at(0));
                             ti_list->enable(gitvc, now + 2000000);
                             logger.info("Setting first GITVC for " + std::to_string(gitvc_times.at(0)) + " microseconds.", now);
-                            gitvc_on = true;
+                            logger.info("Total " + std::to_string(gitvc_times.size()) + " gitvc opens", now);
+			    gitvc_on = true;
                             gitvc_count++;
                           }
 
@@ -251,8 +262,8 @@ void main_worker::worker_method() {
 
 
                         ti_list->disable(gitvc);
-                        logger.debug("Writing GITVC off from timed item.", now);
-                        bcm2835_gpio_write(GITVC_VALVE, LOW);
+                        logger.debug("Ending GITVC from timed item.", now);
+                        bcm2835_gpio_write(GITVC_VALVE, HIGH);
                         break;
                     }
                     if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
@@ -261,18 +272,18 @@ void main_worker::worker_method() {
                             // ti_list->disable(gitvc);
 
                             // Disable current GITVC
-                            bcm2835_gpio_write(GITVC_VALVE, LOW);
+                            bcm2835_gpio_write(GITVC_VALVE, HIGH);
                             gitvc_on = false;
                             logger.debug("Writing GITVC off from timed item for " + std::to_string(time_between_gitvc) + " microseconds", now);
 
                             // Use ti to turn on new GITVC in after time_between_gitvc time passes
                             ti_list->set_delay(gitvc, time_between_gitvc);
                             ti_list->enable(gitvc, now);
-                        } else if (gitvc_times.size() > gitvc_count){ // Currently off, so turn it on
+                        } else if (gitvc_times.size() > gitvc_count && burn_on){ // Currently off, so turn it on if we're still igniting
                             // ti_list->disable(gitvc);
 
                             // Re-enable GITVC
-                            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+                            bcm2835_gpio_write(GITVC_VALVE, LOW);
                             gitvc_on = true;
                             logger.debug("Writing GITVC on from timed item for " + std::to_string(gitvc_times.at(gitvc_count)) + " microseconds", now);
 

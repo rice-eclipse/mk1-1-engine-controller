@@ -75,7 +75,9 @@ enum send_code {
     pt_comb_send = 15,
     tc1_send = 16,
     tc2_send = 17,
-    tc3_send = 18
+    tc3_send = 18,
+    set_water = 19,
+    unset_water = 20
 };
 
 struct send_header_t {

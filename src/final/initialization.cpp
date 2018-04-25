@@ -28,8 +28,10 @@ void initialize_pins() {
     bcm2835_gpio_fsel(VALVE_3, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(VALVE_3, LOW);
 
+
+    // GITVC_VALVE active low
     bcm2835_gpio_fsel(GITVC_VALVE, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_write(GITVC_VALVE, LOW);
+    bcm2835_gpio_write(GITVC_VALVE, HIGH);
 
     bcm2835_gpio_fsel(IGN_START, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(IGN_START, LOW);

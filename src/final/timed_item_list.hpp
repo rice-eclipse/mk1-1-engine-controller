@@ -37,14 +37,16 @@ class timed_item_list {
                 : length(length)
                 , buff_size(buff_size)
         {
+
+	    // todo Hardware bug on ADC channels
             lc_main_ti =
                     timed_item(0, LC_MAIN_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 0), lc_main, true, 0);
             lc1_ti =
                     timed_item(0, LC1_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 1), lc1, true, 0);
             lc2_ti =
-                    timed_item(0, LC2_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 2), lc2, true, 0);
+                    timed_item(0, LC2_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 3), lc2, true, 0);
             lc3_ti =
-                    timed_item(0, LC3_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 3), lc3, true, 0);
+                    timed_item(0, LC3_T, new circular_buffer(buff_size), adc_info_t(LC_ADC, true, 4), lc3, true, 0);
 
             pt_inje_ti =
                     timed_item(0, PT_INJE_T, new circular_buffer(buff_size), adc_info_t(PT_ADC, true, 1), pt_inje, true, 0);
