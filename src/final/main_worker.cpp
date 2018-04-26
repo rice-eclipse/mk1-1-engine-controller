@@ -320,10 +320,11 @@ void main_worker::worker_method() {
             case ign1: {
                 // Set the ignition on and then enable ign2.
                 logger.info("Beginning ignition process", now);
-                logger.debug("Hotflow set to " + std::to_string(ignition_on), now);
-                
 		if (ignition_on) {
 		    bcm2835_gpio_write(IGN_START, HIGH);
+		    logger.info("Hotflow on", now);
+		} else {
+		    logger.info("Hotflow not on due to configuration", now);
 		}
 
                 //todo original was timed_list[10], which is now ign2_ti?
