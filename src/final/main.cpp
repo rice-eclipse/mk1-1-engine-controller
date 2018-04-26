@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     std::vector<int> temp_gitvc_times;
     int result;
 
-    init_config(&port, &use_gitvc, &time_between_gitvc, &gitvc_wait_time, &gitvc_times, &pressure_shutoff, &pressure_slope, &pressure_yint, &pressure_max, &pressure_min, &preignite_ms, &hotflow_ms);
+    init_config(&port, &use_gitvc, &time_between_gitvc, &gitvc_wait_time, &gitvc_times, &pressure_shutoff, &pressure_slope, &pressure_yint, &pressure_max, &pressure_min, &preignite_ms, &hotflow_ms, &ignition_on);
 
     std::cout << gitvc_times.at(0) << std::endl;
 

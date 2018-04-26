@@ -20,8 +20,8 @@ adc_reading adc_data = {};
 
 static int ti_count = 13;
 int gitvc_count = 0;
-int time_between_gitvc = 200000;
-int gitvc_wait_time = 2000000;
+int time_between_gitvc = 200000; // Time between each GITVC open
+int gitvc_wait_time = 2000000; // Time between ignition starting and GITVC
 float pressure_slope = 1;
 float pressure_yint = 0;
 int pressure_min = 300;
@@ -34,6 +34,7 @@ timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
 int preignite_us = 750000;
 int hotflow_us = 7000000;
+bool ignition_on = false;
 bool pressure_shutoff = true;
 bool use_gitvc = false;
 std::vector<int> gitvc_times{};
@@ -127,6 +128,16 @@ void main_worker::worker_method() {
 			bcm2835_gpio_write(WATER_VALVE, LOW);
 			break;
 		    }
+		    case set_gitvc: {
+		        logger.info("Turning gitvc on on pin " + std::to_string(GITVC_VALVE), now);
+			bcm2835_gpio_write(GITVC_VALVE, LOW);
+			break;
+		    }
+		    case unset_gitvc:{
+		    	logger.info("turning gitvc off on pin " + std::to_string(GITVC_VALVE), now);
+			bcm2835_gpio_write(GITVC_VALVE, HIGH);
+			break;
+		    }
                     case unset_ignition: {
                         logger.info("Writing ignition off.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
@@ -192,8 +203,9 @@ void main_worker::worker_method() {
                                 logger.error("Max/Min set to " + std::to_string(pressure_max) + "/" + std::to_string(pressure_min), now);
                                 logger.error("Slope/y-int set to " + std::to_string(pressure_slope) + "/" + std::to_string(pressure_yint), now);
 
-                                bcm2835_gpio_write(MAIN_VALVE, HIGH);
+                                bcm2835_gpio_write(MAIN_VALVE, LOW);
                                 bcm2835_gpio_write(IGN_START, LOW);
+				bcm2835_gpio_write(GITVC_VALVE, HIGH);
                                 burn_on = false;
                             }
                         }
@@ -308,8 +320,11 @@ void main_worker::worker_method() {
             case ign1: {
                 // Set the ignition on and then enable ign2.
                 logger.info("Beginning ignition process", now);
-                logger.debug("Writing ignition off.", now);
-                bcm2835_gpio_write(IGN_START, HIGH);
+                logger.debug("Hotflow set to " + std::to_string(ignition_on), now);
+                
+		if (ignition_on) {
+		    bcm2835_gpio_write(IGN_START, HIGH);
+		}
 
                 //todo original was timed_list[10], which is now ign2_ti?
                 // ign2_ti.enable(now);

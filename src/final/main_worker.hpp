@@ -16,6 +16,7 @@ extern bool use_gitvc;
 extern std::vector<int> gitvc_times;
 extern int preignite_us; // microseconds to run ignition before flow.
 extern int hotflow_us; // microseconds to run hot flow.
+extern bool ignition_on;
 
 extern int time_between_gitvc;
 extern int gitvc_wait_time;

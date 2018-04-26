@@ -77,7 +77,9 @@ enum send_code {
     tc2_send = 17,
     tc3_send = 18,
     set_water = 19,
-    unset_water = 20
+    unset_water = 20,
+    set_gitvc = 21,
+    unset_gitvc = 22
 };
 
 struct send_header_t {
