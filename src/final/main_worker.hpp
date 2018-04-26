@@ -17,6 +17,13 @@ extern std::vector<int> gitvc_times;
 extern int preignite_us; // microseconds to run ignition before flow.
 extern int hotflow_us; // microseconds to run hot flow.
 
+extern int time_between_gitvc;
+extern int gitvc_wait_time;
+extern float pressure_slope;
+extern float pressure_yint;
+extern int pressure_min;
+extern int pressure_max;
+
 struct adc_reading {
     timestamp_t dat;
     uint64_t t;

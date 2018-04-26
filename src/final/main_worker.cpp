@@ -21,6 +21,12 @@ adc_reading adc_data = {};
 static int ti_count = 13;
 int gitvc_count = 0;
 int time_between_gitvc = 200000;
+int gitvc_wait_time = 2000000;
+float pressure_slope = 1;
+float pressure_yint = 0;
+int pressure_min = 300;
+int pressure_max = 800;
+
 bool gitvc_on;
 timestamp_t now = 0;
 // timed_item ti_list[MAX_TIMED_LIST_LEN];
@@ -62,7 +68,6 @@ static void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw) {
 static timestamp_t start_time_nitr = 0;
 static double pressure_avg = 700;
 static bool burn_on = false;
-int dont_crash = 0;
 
 void main_worker::worker_method() {
     network_queue_item nq_item = {};
@@ -176,14 +181,17 @@ void main_worker::worker_method() {
                     if (ti->action == pt_comb && pressure_shutoff) {
                         // todo calibrate adcd.dat first
                         // For y = mx+b, m=-0.36002  b=1412.207
-                        double pt_cal = -0.2810327855 * adc_data.dat + 1068.22;
+                        double pt_cal = pressure_slope * adc_data.dat + pressure_yint;
                         pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05;
 
-                        if ((pressure_avg > 800 || pressure_avg < 300) && burn_on) {
+                        if ((pressure_avg > pressure_max || pressure_avg < pressure_min) && burn_on) {
                             // Start after 1000ms = 1s.
                             if (now - start_time_nitr > 1000000) {
                                 // GITVC is active low
-                                logger.error("Pressure shutoff. Closing main valve and unsetting ignition.", now);
+                                logger.error("Pressure shutoff: " + std::to_string(pressure_avg) + " . Closing main valve and unsetting ignition.", now);
+                                logger.error("Max/Min set to " + std::to_string(pressure_max) + "/" + std::to_string(pressure_min), now);
+                                logger.error("Slope/y-int set to " + std::to_string(pressure_slope) + "/" + std::to_string(pressure_yint), now);
+
                                 bcm2835_gpio_write(MAIN_VALVE, HIGH);
                                 bcm2835_gpio_write(IGN_START, LOW);
                                 burn_on = false;
@@ -236,7 +244,7 @@ void main_worker::worker_method() {
 
                         if (use_gitvc && gitvc_times.size() > gitvc_count) {
                             ti_list->set_delay(gitvc, gitvc_times.at(0));
-                            ti_list->enable(gitvc, now + 2000000);
+                            ti_list->enable(gitvc, now + gitvc_wait_time);
                             logger.info("Setting first GITVC for " + std::to_string(gitvc_times.at(0)) + " microseconds.", now);
                             logger.info("Total " + std::to_string(gitvc_times.size()) + " gitvc opens", now);
 			    gitvc_on = true;
@@ -319,6 +327,5 @@ void main_worker::worker_method() {
                 break;
             }
         }
-        dont_crash++;
     }
 }
