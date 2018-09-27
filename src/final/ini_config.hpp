@@ -8,6 +8,8 @@
 #define SOFTWARE_INI_CONFIG_H
 
 #include <boost/program_options/variables_map.hpp>
+#include <vector>
+
 namespace po = boost::program_options;
 
 

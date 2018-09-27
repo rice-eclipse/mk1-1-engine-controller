@@ -15,7 +15,7 @@ class timed_item_list {
         uint8_t length;
         size_t buff_size;
         std::map <work_queue_item_action, int> actionMap;
-        timed_item tis[];
+        timed_item tis[13];
         timed_item lc_main_ti;
         timed_item lc1_ti;
         timed_item lc2_ti;
@@ -66,7 +66,6 @@ class timed_item_list {
             ign3_ti = timed_item(0, hotflow_us, nullptr, adc_info_t(), ign3, false, 0);
 
             gitvc_ti = timed_item(0, 10000, nullptr, adc_info_t(), gitvc, false, 0);
-
 
             timed_item temp_ti_list[] = {lc_main_ti, lc1_ti, lc2_ti, lc3_ti, pt_inje_ti, pt_comb_ti, pt_feed_ti, tc1_ti, tc2_ti,
                                          tc3_ti, ign2_ti, ign3_ti, gitvc_ti};
