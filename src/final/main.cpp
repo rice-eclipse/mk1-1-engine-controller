@@ -30,11 +30,22 @@ circular_buffer buff(CIRC_SIZE);
  */
 int main(int argc, char **argv) {
     unsigned int port, preignite_ms, hotflow_ms;
-    bool temp_pressure_shutoff;
-    std::vector<int> temp_gitvc_times;
     int result;
 
-    init_config(&port, &use_gitvc, &time_between_gitvc, &gitvc_wait_time, &gitvc_times, &pressure_shutoff, &pressure_slope, &pressure_yint, &pressure_max, &pressure_min, &preignite_ms, &hotflow_ms, &ignition_on);
+    // Store the config values in these variables
+    init_config(&port,
+		&use_gitvc,
+		&time_between_gitvc,
+		&gitvc_wait_time,
+		&gitvc_times,
+		&pressure_shutoff,
+		&pressure_slope,
+		&pressure_yint,
+		&pressure_max,
+		&pressure_min,
+		&preignite_ms,
+		&hotflow_ms,
+		&ignition_on);
 
     std::cout << gitvc_times.at(0) << std::endl;
 
@@ -86,7 +97,6 @@ int main(int argc, char **argv) {
 
     // Set the base time so that we have no risk of overflow.
     set_base_time();
-
 
 
     // Now we create our network and hardware workers:

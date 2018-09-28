@@ -16,7 +16,19 @@ po::variables_map config_map;
 // Configures the expected options to be read from the INI file, reads these, and then
 // returns a variables_map containing the config parameters. See Boost::program_options
 // documentation for more information about using po::variables_map
-po::variables_map init_config(unsigned int *port, bool *use_gitvc, int *time_between_gitvc, int *gitvc_wait_time, std::vector<int> *gitvc_times, bool *pressure_shutoff, float *pressure_slope, float *pressure_yint, int *pressure_max, int *pressure_min, unsigned int *preignite_ms, unsigned int *hotflow_ms, bool *ignition_on)
+po::variables_map init_config(unsigned int *port,
+			      bool *use_gitvc,
+			      int *time_between_gitvc,
+			      int *gitvc_wait_time,
+			      std::vector<int> *gitvc_times,
+			      bool *pressure_shutoff,
+			      float *pressure_slope,
+			      float *pressure_yint,
+			      int *pressure_max,
+			      int *pressure_min,
+			      unsigned int *preignite_ms,
+			      unsigned int *hotflow_ms,
+			      bool *ignition_on)
 {
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -33,8 +45,7 @@ po::variables_map init_config(unsigned int *port, bool *use_gitvc, int *time_bet
         ("Pressure.Pressure_slope", po::value<float>(pressure_slope)->required(), "set pt_comb slope")
         ("Pressure.Pressure_yint", po::value<float>(pressure_yint)->required(), "set pt_comb y intercept")
         ("Pressure.Pressure_max", po::value<int>(pressure_max)->default_value(800), "set max pressure cutoff")
-        ("Pressure.Pressure_min", po::value<int>(pressure_min)->default_value(300), "set min pressure cutoff")
-        ;
+        ("Pressure.Pressure_min", po::value<int>(pressure_min)->default_value(300), "set min pressure cutoff");
 
     //todo change dir if needed
     std::ifstream in("src/final/config.ini");

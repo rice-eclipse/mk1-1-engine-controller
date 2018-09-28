@@ -36,8 +36,6 @@ void initialize_pins() {
     bcm2835_gpio_fsel(IGN_START, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(IGN_START, LOW);
 
-    // Setup all the SPI stuff:
-
     return;
 }
 
@@ -48,16 +46,14 @@ int initialize_spi() {
         return 1;
     }
 
-    bcm2835_spi_chipSelect(BCM2835_SPI_CS_NONE);                      // Default, leave it for now.
+    bcm2835_spi_chipSelect(BCM2835_SPI_CS_NONE);                  // Default, leave it for now.
     bcm2835_spi_setBitOrder(BCM2835_SPI_BIT_ORDER_MSBFIRST);      // Necessary for MCP
     bcm2835_spi_setDataMode(BCM2835_SPI_MODE3);                   // The MCP... uses this.
 
     //bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_256); // Just under 1MHz
-    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_1024); // Seems like 1Mhz is too fast to charge internal cap.
+    bcm2835_spi_setClockDivider(BCM2835_SPI_CLOCK_DIVIDER_1024);  // Seems like 1Mhz is too fast to charge internal cap.
     bcm2835_spi_setChipSelectPolarity(BCM2835_SPI_CS0, LOW);      // Active low.
     bcm2835_spi_setChipSelectPolarity(BCM2835_SPI_CS1, LOW);      // Active low.
-
-    // Create the ADC block and
 
     return 0;
 }
