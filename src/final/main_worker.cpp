@@ -20,24 +20,23 @@ adc_reading adc_data = {};
 
 static int ti_count = 13;
 int gitvc_count = 0;
-int time_between_gitvc = 200000; // Time between each GITVC open
-int gitvc_wait_time = 2000000; // Time between ignition starting and GITVC
-float pressure_slope = 1;
-float pressure_yint = 0;
-int pressure_min = 300;
-int pressure_max = 800;
 
 bool gitvc_on;
 timestamp_t now = 0;
-// timed_item ti_list[MAX_TIMED_LIST_LEN];
 timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
-int preignite_us = 750000;
-int hotflow_us = 7000000;
-bool ignition_on = false;
-bool pressure_shutoff = true;
-bool use_gitvc = false;
-std::vector<int> gitvc_times{};
+extern int time_between_gitvc;
+extern int gitvc_wait_time; // Time between ignition starting and GITVC
+extern float pressure_slope;
+extern float pressure_yint;
+extern int pressure_min;
+extern int pressure_max;
+extern int preignite_us;
+extern int hotflow_us;
+extern bool ignition_on;
+extern bool pressure_shutoff;
+extern bool use_gitvc;
+extern std::vector<int> gitvc_times;
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
@@ -190,10 +189,8 @@ void main_worker::worker_method() {
                     //FIXME switch this.
 
                     if (ti->action == pt_comb && pressure_shutoff) {
-                        // todo calibrate adcd.dat first
-                        // For y = mx+b, m=-0.36002  b=1412.207
                         double pt_cal = pressure_slope * adc_data.dat + pressure_yint;
-                        pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05;
+                        pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05; // Running average
 
                         if ((pressure_avg > pressure_max || pressure_avg < pressure_min) && burn_on) {
                             // Start after 1000ms = 1s.
@@ -255,7 +252,8 @@ void main_worker::worker_method() {
                         burn_on = true;
 
                         if (use_gitvc && gitvc_times.size() > gitvc_count) {
-                            ti_list->set_delay(gitvc, gitvc_times.at(0));
+			    // Set delay to 0 so GITVC starts after gitvc_wait_time
+                            ti_list->set_delay(gitvc, 0);
                             ti_list->enable(gitvc, now + gitvc_wait_time);
                             logger.info("Setting first GITVC for " + std::to_string(gitvc_times.at(0)) + " microseconds.", now);
                             logger.info("Total " + std::to_string(gitvc_times.size()) + " gitvc opens", now);

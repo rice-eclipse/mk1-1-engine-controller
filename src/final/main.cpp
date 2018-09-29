@@ -47,7 +47,22 @@ int main(int argc, char **argv) {
 		&hotflow_ms,
 		&ignition_on);
 
-    std::cout << gitvc_times.at(0) << std::endl;
+    std::cout << "Hotflow time: " << hotflow_ms << '\n';
+    std::cout << "Ignition:" << ignition_on << std::endl;
+    std::cout << "Use pressure shutoff:: " << pressure_shutoff << '\n';
+    std::cout << "pressure slope: " << pressure_slope << '\n';
+    std::cout << "Pressure y-intercept: " << pressure_yint << '\n';
+    std::cout << "Pressure max: " << pressure_max << '\n';
+    std::cout << "Pressure min: " << pressure_min << '\n';
+    std::cout << "Time before ignition: " << preignite_ms << '\n';
+    std::cout << "Use GITVC: " << use_gitvc << '\n';
+
+    if (use_gitvc) {
+    	std::cout << "Time between GITVC: " << time_between_gitvc << '\n';
+
+    	for(int i = 0; i < gitvc_times.size(); i++)
+		std::cout << gitvc_times[i] << '\n';
+    }
 
     preignite_us = preignite_ms * 1000;
     hotflow_us = hotflow_ms * 1000;
