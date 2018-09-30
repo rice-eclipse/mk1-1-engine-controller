@@ -25,18 +25,19 @@ bool gitvc_on;
 timestamp_t now = 0;
 timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
-extern int time_between_gitvc;
-extern int gitvc_wait_time; // Time between ignition starting and GITVC
-extern float pressure_slope;
-extern float pressure_yint;
-extern int pressure_min;
-extern int pressure_max;
-extern int preignite_us;
-extern int hotflow_us;
-extern bool ignition_on;
-extern bool pressure_shutoff;
-extern bool use_gitvc;
-extern std::vector<int> gitvc_times;
+// These variables will be initialized from config.ini
+int time_between_gitvc;
+int gitvc_wait_time;
+float pressure_slope;
+float pressure_yint;
+int pressure_min;
+int pressure_max;
+int preignite_us;
+int hotflow_us;
+bool ignition_on;
+bool pressure_shutoff;
+bool use_gitvc;
+std::vector<int> gitvc_times;
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
