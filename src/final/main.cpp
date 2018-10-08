@@ -31,6 +31,14 @@ circular_buffer buff(CIRC_SIZE);
 int main(int argc, char **argv) {
     unsigned int port, preignite_ms, hotflow_ms;
     int result;
+    char* filename;
+
+    if (argc < 2) {
+	    std::cout << "Please provide a config file filename!\n";
+	    return 1;
+    } else {
+	    filename = argv[1];
+    }
 
     // Store the config values in these variables
     init_config(&port,
@@ -45,7 +53,8 @@ int main(int argc, char **argv) {
 		&pressure_min,
 		&preignite_ms,
 		&hotflow_ms,
-		&ignition_on);
+		&ignition_on,
+		filename);
 
     std::cout << "Hotflow time: " << hotflow_ms << '\n';
     std::cout << "Ignition:" << ignition_on << std::endl;
@@ -58,10 +67,10 @@ int main(int argc, char **argv) {
     std::cout << "Use GITVC: " << use_gitvc << '\n';
 
     if (use_gitvc) {
-    	std::cout << "Time between GITVC: " << time_between_gitvc << '\n';
+    	std::cout << "\n Time between GITVC: " << time_between_gitvc << '\n';
 
     	for(int i = 0; i < gitvc_times.size(); i++)
-		std::cout << gitvc_times[i] << '\n';
+		std::cout << "    " << gitvc_times[i] << '\n';
     }
 
     preignite_us = preignite_ms * 1000;

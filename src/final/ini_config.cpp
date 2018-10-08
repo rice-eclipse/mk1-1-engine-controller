@@ -9,9 +9,12 @@
 #include <iostream>
 #include <iterator>
 #include <fstream>
+#include <string>
 
 // Global variables_map for config values
 po::variables_map config_map;
+// Name of the config file, e.g. coldflow
+std::string filename;
 
 // Configures the expected options to be read from the INI file, reads these, and then
 // returns a variables_map containing the config parameters. See Boost::program_options
@@ -28,7 +31,8 @@ po::variables_map init_config(unsigned int *port,
 			      int *pressure_min,
 			      unsigned int *preignite_ms,
 			      unsigned int *hotflow_ms,
-			      bool *ignition_on)
+			      bool *ignition_on,
+			      char* filename)
 {
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -48,7 +52,7 @@ po::variables_map init_config(unsigned int *port,
         ("Pressure.Pressure_min", po::value<int>(pressure_min)->default_value(300), "set min pressure cutoff");
 
     //todo change dir if needed
-    std::ifstream in("src/final/config.ini");
+    std::ifstream in("../../../src/final/" + std::string(filename) + ".ini");
     po::store(po::parse_config_file(in, desc), config_map);
     in.close();
     po::notify(config_map);
