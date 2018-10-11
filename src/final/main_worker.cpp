@@ -3,6 +3,7 @@
 //
 
 #include <assert.h>
+#include <climits>
 #include <iostream>
 #include "unistd.h"
 #include "main_worker.hpp"
@@ -235,7 +236,7 @@ void main_worker::worker_method() {
                         write_from_nqi(nq_item);
                         break;
                     }
-                } else { // Handle the case of using ignition stuff.
+                } else { // Handle the cases of using ignition stuff.
                     if (ti->action == ign2) {
                         // ign2_ti.disable();
                         // ign3_ti.enable(now);
@@ -253,13 +254,11 @@ void main_worker::worker_method() {
                         burn_on = true;
 
                         if (use_gitvc && gitvc_times.size() > gitvc_count) {
-			    // Set delay to 0 so GITVC starts after gitvc_wait_time
-                            ti_list->set_delay(gitvc, 0);
-                            ti_list->enable(gitvc, now + gitvc_wait_time);
-                            logger.info("Setting first GITVC for " + std::to_string(gitvc_times.at(0)) + " microseconds.", now);
+                            ti_list->enable(gitvc, now);
+			    logger.info("Setting GITVC to start after " + std::to_string(gitvc_wait_time) + " microseconds", now);
                             logger.info("Total " + std::to_string(gitvc_times.size()) + " gitvc opens", now);
 			    gitvc_on = true;
-                            gitvc_count++;
+                            // gitvc_count++;
                           }
 
                         break;
@@ -281,6 +280,7 @@ void main_worker::worker_method() {
 
 
                         ti_list->disable(gitvc);
+			gitvc_count = INT_MAX; // In case the config is wrong and GITVC extends past total burn time
                         logger.debug("Ending GITVC from timed item.", now);
                         bcm2835_gpio_write(GITVC_VALVE, HIGH);
                         break;
