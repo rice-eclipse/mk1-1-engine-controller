@@ -63,6 +63,7 @@ class timed_item_list {
                     timed_item(0, TC3_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 6), tc3, true, 0);
 
             ign2_ti = timed_item(0, preignite_us, nullptr, adc_info_t(), ign2, false, 0);
+
             ign3_ti = timed_item(0, hotflow_us, nullptr, adc_info_t(), ign3, false, 0);
 
             gitvc_ti = timed_item(0, gitvc_wait_time, nullptr, adc_info_t(), gitvc, false, 0);

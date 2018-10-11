@@ -93,6 +93,7 @@ void main_worker::worker_method() {
         switch (wq_item.action) {
             // A case (that should be deprecated) that can be used to handle actions. Ideally remove this code asap.
             case (wq_process): {
+		logger.info("In process case");
                 c = wq_item.data[0];
 
                 logger.debug("Processing request on worker.");
@@ -167,7 +168,6 @@ void main_worker::worker_method() {
             }
 
             // The case for handling a request from a timed item.
-            // This can be left as is, but ideally the logic would be moved into a future timed_item class.
             case (wq_timed): {
                 // Get the timed item that added this:
                 timed_item *ti = wq_item.extra_datap;
@@ -237,7 +237,7 @@ void main_worker::worker_method() {
                         break;
                     }
                 } else { // Handle the cases of using ignition stuff.
-                    if (ti->action == ign2) {
+                    if (ti->action == ign2) { // Open the main valve and initiative GITVC
                         // ign2_ti.disable();
                         // ign3_ti.enable(now);
 
@@ -265,7 +265,7 @@ void main_worker::worker_method() {
                         // Enable the second igntion thing:
                         // TODO
                     }
-                    if (ti->action == ign3) {
+                    if (ti->action == ign3) { // End the burn and gitvc
                         logger.info("Ending burn.", now);
                         burn_on = false;
                         logger.debug("Writing main valve off from timed item.", now);
@@ -280,9 +280,11 @@ void main_worker::worker_method() {
 
 
                         ti_list->disable(gitvc);
-			gitvc_count = INT_MAX; // In case the config is wrong and GITVC extends past total burn time
+			gitvc_count = INT_MAX; // Added security for shutting off GITVC
                         logger.debug("Ending GITVC from timed item.", now);
                         bcm2835_gpio_write(GITVC_VALVE, HIGH);
+
+			bcm2835_gpio_write(WATER_VALVE, LOW);
                         break;
                     }
                     if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
@@ -316,8 +318,7 @@ void main_worker::worker_method() {
                 }
                 break;
             }
-            case ign1: {
-                // Set the ignition on and then enable ign2.
+            case ign1: { // Initial setting of ignition on. Also starts water.
                 logger.info("Beginning ignition process", now);
 		if (ignition_on) {
 		    bcm2835_gpio_write(IGN_START, HIGH);
@@ -329,7 +330,11 @@ void main_worker::worker_method() {
                 //todo original was timed_list[10], which is now ign2_ti?
                 // ign2_ti.enable(now);
                 // ti_list->tis[10].enable(now);
+		
+		// Enable main valve on after the preignite period
                 ti_list->enable(ign2, now);
+
+                bcm2835_gpio_write(WATER_VALVE, HIGH);
                 break;
             }
             case (wq_none): {
