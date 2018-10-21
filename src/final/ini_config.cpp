@@ -29,8 +29,8 @@ po::variables_map init_config(unsigned int *port,
 			      float *pressure_yint,
 			      int *pressure_max,
 			      int *pressure_min,
-			      unsigned int *preignite_ms,
-			      unsigned int *hotflow_ms,
+			      int *preignite_ms,
+			      int *hotflow_ms,
 			      bool *ignition_on,
 			      char* filename)
 {
@@ -43,8 +43,8 @@ po::variables_map init_config(unsigned int *port,
         ("Control.Gitvc_wait_time", po::value<int>(gitvc_wait_time)->default_value(0), "set length of ignition before gitvc")
         ("Control.Gitvc_times", po::value<std::vector<int>>(gitvc_times)->multitoken(), "array of times IN MICROSECONDS for GITVC")
         ("Control.Ignition_on", po::value<bool>(ignition_on)->required(), "set ignition on or off")
-	("Control.Preignite_ms",  po::value<unsigned int>(preignite_ms)->required(), "set milliseconds for preignition period")
-        ("Control.Hotflow_ms",  po::value<unsigned int>(hotflow_ms)->required(), "set milliseconds before beginning hotflow")
+	    ("Control.Preignite_ms",  po::value<int>(preignite_ms)->required(), "set milliseconds for preignition period")
+        ("Control.Hotflow_ms",  po::value<int>(hotflow_ms)->required(), "set milliseconds before beginning hotflow")
         ("Pressure.Pressure_shutoff", po::value<bool>(pressure_shutoff)->default_value(true), "enable/disable pressure cutoff")
         ("Pressure.Pressure_slope", po::value<float>(pressure_slope)->required(), "set pt_comb slope")
         ("Pressure.Pressure_yint", po::value<float>(pressure_yint)->required(), "set pt_comb y intercept")

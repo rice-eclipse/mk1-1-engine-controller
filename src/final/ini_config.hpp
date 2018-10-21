@@ -22,8 +22,8 @@ po::variables_map init_config(unsigned int *port,
 			      float *pressure_yint,
 			      int *pressure_max,
 			      int *pressure_min,
-			      unsigned int *preignite_ms,
-			      unsigned int *hotflow_ms,
+			      int *preignite_ms,
+			      int *hotflow_ms,
 			      bool *ignition_on,
 			      char *filename);
 

@@ -7,6 +7,9 @@
 #include "timed_item.hpp"
 #include "timed_item_list.hpp"
 
+int preignite_us;
+int hotflow_us;
+
 void timed_item_list::enable(work_queue_item_action ti, timestamp_t now) {
     tis[actionMap.at(ti)].enable(now);
 }

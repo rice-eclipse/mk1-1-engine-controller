@@ -11,19 +11,18 @@
 #include "../util/timestamps.hpp"
 #include "main_network_worker.hpp"
 
-extern bool pressure_shutoff;
-extern bool use_gitvc;
-extern std::vector<int> gitvc_times;
-extern int preignite_us; // microseconds to run ignition before flow.
-extern int hotflow_us; // microseconds to run hot flow.
-extern bool ignition_on;
-
 extern int time_between_gitvc;
 extern int gitvc_wait_time;
 extern float pressure_slope;
 extern float pressure_yint;
 extern int pressure_min;
 extern int pressure_max;
+extern int preignite_us;
+extern int hotflow_us;
+extern bool ignition_on;
+extern bool pressure_shutoff;
+extern bool use_gitvc;
+extern std::vector<int> gitvc_times;
 
 struct adc_reading {
     timestamp_t dat;

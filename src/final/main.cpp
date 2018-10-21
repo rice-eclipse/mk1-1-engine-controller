@@ -29,8 +29,8 @@ circular_buffer buff(CIRC_SIZE);
  * @return 0 unless an error occurs.
  */
 int main(int argc, char **argv) {
-    unsigned int port, preignite_ms, hotflow_ms;
-    int result;
+    unsigned int port; 
+    int result, preignite_ms, hotflow_ms;
     char* filename;
 
     if (argc < 2) {
@@ -42,25 +42,25 @@ int main(int argc, char **argv) {
 
     // Store the config values in these variables
     init_config(&port,
-		&use_gitvc,
-		&time_between_gitvc,
-		&gitvc_wait_time,
-		&gitvc_times,
-		&pressure_shutoff,
-		&pressure_slope,
-		&pressure_yint,
-		&pressure_max,
-		&pressure_min,
-		&preignite_ms,
-		&hotflow_ms,
-		&ignition_on,
-		filename);
+                &use_gitvc,
+                &time_between_gitvc,
+                &gitvc_wait_time,
+                &gitvc_times,
+                &pressure_shutoff,
+                &pressure_slope,
+                &pressure_yint,
+                &pressure_max,
+                &pressure_min,
+                &preignite_ms,
+                &hotflow_ms,
+                &ignition_on,
+                filename);
 
     std::cout << "Reading config options from file: " << argv[1] << '\n';
 
     std::cout << "Hotflow time: " << hotflow_ms << '\n';
     std::cout << "Ignition:" << ignition_on << std::endl;
-    std::cout << "Use pressure shutoff:: " << pressure_shutoff << '\n';
+    std::cout << "Use pressure shutoff: " << pressure_shutoff << '\n';
     std::cout << "pressure slope: " << pressure_slope << '\n';
     std::cout << "Pressure y-intercept: " << pressure_yint << '\n';
     std::cout << "Pressure max: " << pressure_max << '\n';
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     std::cout << "Use GITVC: " << use_gitvc << '\n';
 
     if (use_gitvc) {
-    	std::cout << "\n Time between GITVC: " << time_between_gitvc << '\n';
+    	std::cout << "\nTime between GITVC: " << time_between_gitvc << '\n';
 
     	for(int i = 0; i < gitvc_times.size(); i++)
 		std::cout << "    " << gitvc_times[i] << '\n';
@@ -78,12 +78,14 @@ int main(int argc, char **argv) {
     preignite_us = preignite_ms * 1000;
     hotflow_us = hotflow_ms * 1000;
 
+    std::cout << "hotflow_us after multiplication: " << hotflow_us << '\n';
+
     if (preignite_us < 0 || preignite_us > 5000000) {
         std::cerr << "Incorrect preignite time." << std::endl;
         return 1;
     }
 
-    if (hotflow_us < 0 || hotflow_us > 15000000) {
+    if (hotflow_ms < 0 || hotflow_ms > 15000000) {
         std::cerr << "Incorrect hotflow time." << std::endl;
         return 1;
     }
@@ -136,7 +138,10 @@ int main(int argc, char **argv) {
 
 
     main_network_worker nw(qn, qw, port, buff);
+
+    std::cout << "Hotflow_us right before main_worker: " << hotflow_us << '\n';
     main_worker cw(qn, qw, buff, adcs, &nw);
+    std::cout << "Hotflow_us right after main_worker: " << hotflow_us << '\n';
 
     nw.start();
     cw.start();

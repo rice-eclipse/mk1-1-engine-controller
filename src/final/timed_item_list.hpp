@@ -5,6 +5,7 @@
 #ifndef SOFTWARE_TI_LIST_HPP
 #define SOFTWARE_TI_LIST_HPP
 
+#include <iostream>
 #include "timed_item.hpp"
 #include "pins.hpp"
 #include "main_worker.hpp"
@@ -62,9 +63,13 @@ class timed_item_list {
             tc3_ti =
                     timed_item(0, TC3_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 6), tc3, true, 0);
 
+            std::cout << "PREIGNITE_US: " << preignite_us << '\n';
+
             ign2_ti = timed_item(0, preignite_us, nullptr, adc_info_t(), ign2, false, 0);
 
-            ign3_ti = timed_item(0, hotflow_us, nullptr, adc_info_t(), ign3, false, 0);
+            std::cout << "IGNITION SHUTOFF TIME: " << hotflow_us << '\n';
+
+            ign3_ti = timed_item(0, hotflow_us * 1000, nullptr, adc_info_t(), ign3, false, 0);
 
             gitvc_ti = timed_item(0, gitvc_wait_time, nullptr, adc_info_t(), gitvc, false, 0);
 

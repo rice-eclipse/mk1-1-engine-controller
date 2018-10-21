@@ -21,10 +21,9 @@ adc_reading adc_data = {};
 
 static int ti_count = 13;
 int gitvc_count = 0;
+timestamp_t now = 0;
 
 bool gitvc_on;
-timestamp_t now = 0;
-timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
 // These variables will be initialized from config.ini
 int time_between_gitvc;
@@ -33,12 +32,14 @@ float pressure_slope;
 float pressure_yint;
 int pressure_min;
 int pressure_max;
-int preignite_us;
-int hotflow_us;
+// int preignite_us;
+// int hotflow_us;
 bool ignition_on;
 bool pressure_shutoff;
 bool use_gitvc;
 std::vector<int> gitvc_times;
+
+timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
@@ -120,26 +121,26 @@ void main_worker::worker_method() {
                         bcm2835_gpio_write(MAIN_VALVE, HIGH);
                         break;
                     }
-		    case set_water: {
-			logger.info("Turning water on on pin " + std::to_string(WATER_VALVE), now);
-			bcm2835_gpio_write(WATER_VALVE, HIGH);
-			break;
-		    }
-		    case unset_water: {
-			logger.info("Turning water off on pin " + std::to_string(WATER_VALVE), now);
-			bcm2835_gpio_write(WATER_VALVE, LOW);
-			break;
-		    }
-		    case set_gitvc: {
-		        logger.info("Turning gitvc on on pin " + std::to_string(GITVC_VALVE), now);
-			bcm2835_gpio_write(GITVC_VALVE, LOW);
-			break;
-		    }
-		    case unset_gitvc:{
-		    	logger.info("turning gitvc off on pin " + std::to_string(GITVC_VALVE), now);
-			bcm2835_gpio_write(GITVC_VALVE, HIGH);
-			break;
-		    }
+                    case set_water: {
+                        logger.info("Turning water on on pin " + std::to_string(WATER_VALVE), now);
+                        bcm2835_gpio_write(WATER_VALVE, HIGH);
+                        break;
+                    }
+                    case unset_water: {
+                        logger.info("Turning water off on pin " + std::to_string(WATER_VALVE), now);
+                        bcm2835_gpio_write(WATER_VALVE, LOW);
+                        break;
+                    }
+                    case set_gitvc: {
+                        logger.info("Turning gitvc on on pin " + std::to_string(GITVC_VALVE), now);
+                        bcm2835_gpio_write(GITVC_VALVE, LOW);
+                        break;
+                    }
+                    case unset_gitvc:{
+                        logger.info("turning gitvc off on pin " + std::to_string(GITVC_VALVE), now);
+                        bcm2835_gpio_write(GITVC_VALVE, HIGH);
+                        break;
+                    }
                     case unset_ignition: {
                         logger.info("Writing ignition off.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
@@ -278,13 +279,12 @@ void main_worker::worker_method() {
                         logger.debug("Writing ignition off from timed item.", now);
                         bcm2835_gpio_write(IGN_START, LOW);
 
-
                         ti_list->disable(gitvc);
-			gitvc_count = INT_MAX; // Added security for shutting off GITVC
+                        gitvc_count = INT_MAX; // Added security for shutting off GITVC
                         logger.debug("Ending GITVC from timed item.", now);
                         bcm2835_gpio_write(GITVC_VALVE, HIGH);
 
-			bcm2835_gpio_write(WATER_VALVE, LOW);
+                        bcm2835_gpio_write(WATER_VALVE, LOW);
                         break;
                     }
                     if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
@@ -320,20 +320,23 @@ void main_worker::worker_method() {
             }
             case ign1: { // Initial setting of ignition on. Also starts water.
                 logger.info("Beginning ignition process", now);
-		if (ignition_on) {
-		    bcm2835_gpio_write(IGN_START, HIGH);
-		    logger.info("Hotflow on", now);
-		} else {
-		    logger.info("Hotflow not on due to configuration", now);
-		}
+                if (ignition_on) {
+                    bcm2835_gpio_write(IGN_START, HIGH);
+                    logger.info("Hotflow on", now);
+                } else {
+                    logger.info("Hotflow not on due to configuration", now);
+                }
 
                 //todo original was timed_list[10], which is now ign2_ti?
                 // ign2_ti.enable(now);
                 // ti_list->tis[10].enable(now);
 		
-		// Enable main valve on after the preignite period
+		        // Enable main valve on after the preignite period
+                std::cout << "main_worker setting preignite_us and hotflow_us: " << preignite_us << "    " << hotflow_us << '\n';
+                ti_list->set_delay(ign2, preignite_us);
                 ti_list->enable(ign2, now);
 
+                ti_list->set_delay(ign3, hotflow_us);
                 bcm2835_gpio_write(WATER_VALVE, HIGH);
                 break;
             }
