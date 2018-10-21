@@ -56,6 +56,8 @@ int main(int argc, char **argv) {
 		&ignition_on,
 		filename);
 
+    std::cout << "Reading config options from file: " << argv[1] << '\n';
+
     std::cout << "Hotflow time: " << hotflow_ms << '\n';
     std::cout << "Ignition:" << ignition_on << std::endl;
     std::cout << "Use pressure shutoff:: " << pressure_shutoff << '\n';
