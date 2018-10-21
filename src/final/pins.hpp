@@ -20,17 +20,4 @@
 #define PT_ADC ADC_1_CS
 #define TC_ADC ADC_1_CS
 
-//extern RPiGPIOPin ADC_0_CS;
-//extern RPiGPIOPin ADC_1_CS;
-//extern RPiGPIOPin ADC_2_CS;
-//
-//extern RPiGPIOPin MAIN_VALVE;
-//extern RPiGPIOPin WATER_VALVE;
-//extern RPiGPIOPin VALVE_3;
-//extern RPiGPIOPin GITVC_VALVE;
-//extern RPiGPIOPin IGN_START;
-//
-//RPiGPIOPin LC_ADC = ADC_2_CS;
-//extern RPiGPIOPin PT_ADC;
-//extern RPiGPIOPin TC_ADC;
 #endif //SOFTWARE_PINS_HPP

@@ -3,6 +3,7 @@
 //
 
 #include <assert.h>
+#include <climits>
 #include <iostream>
 #include "unistd.h"
 #include "main_worker.hpp"
@@ -20,24 +21,24 @@ adc_reading adc_data = {};
 
 static int ti_count = 13;
 int gitvc_count = 0;
-int time_between_gitvc = 200000; // Time between each GITVC open
-int gitvc_wait_time = 2000000; // Time between ignition starting and GITVC
-float pressure_slope = 1;
-float pressure_yint = 0;
-int pressure_min = 300;
-int pressure_max = 800;
 
 bool gitvc_on;
 timestamp_t now = 0;
-// timed_item ti_list[MAX_TIMED_LIST_LEN];
 timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
-int preignite_us = 750000;
-int hotflow_us = 7000000;
-bool ignition_on = false;
-bool pressure_shutoff = true;
-bool use_gitvc = false;
-std::vector<int> gitvc_times{};
+// These variables will be initialized from config.ini
+int time_between_gitvc;
+int gitvc_wait_time;
+float pressure_slope;
+float pressure_yint;
+int pressure_min;
+int pressure_max;
+int preignite_us;
+int hotflow_us;
+bool ignition_on;
+bool pressure_shutoff;
+bool use_gitvc;
+std::vector<int> gitvc_times;
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
@@ -92,6 +93,7 @@ void main_worker::worker_method() {
         switch (wq_item.action) {
             // A case (that should be deprecated) that can be used to handle actions. Ideally remove this code asap.
             case (wq_process): {
+		logger.info("In process case");
                 c = wq_item.data[0];
 
                 logger.debug("Processing request on worker.");
@@ -166,7 +168,6 @@ void main_worker::worker_method() {
             }
 
             // The case for handling a request from a timed item.
-            // This can be left as is, but ideally the logic would be moved into a future timed_item class.
             case (wq_timed): {
                 // Get the timed item that added this:
                 timed_item *ti = wq_item.extra_datap;
@@ -190,10 +191,8 @@ void main_worker::worker_method() {
                     //FIXME switch this.
 
                     if (ti->action == pt_comb && pressure_shutoff) {
-                        // todo calibrate adcd.dat first
-                        // For y = mx+b, m=-0.36002  b=1412.207
                         double pt_cal = pressure_slope * adc_data.dat + pressure_yint;
-                        pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05;
+                        pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05; // Running average
 
                         if ((pressure_avg > pressure_max || pressure_avg < pressure_min) && burn_on) {
                             // Start after 1000ms = 1s.
@@ -237,8 +236,8 @@ void main_worker::worker_method() {
                         write_from_nqi(nq_item);
                         break;
                     }
-                } else { // Handle the case of using ignition stuff.
-                    if (ti->action == ign2) {
+                } else { // Handle the cases of using ignition stuff.
+                    if (ti->action == ign2) { // Open the main valve and initiative GITVC
                         // ign2_ti.disable();
                         // ign3_ti.enable(now);
 
@@ -255,19 +254,18 @@ void main_worker::worker_method() {
                         burn_on = true;
 
                         if (use_gitvc && gitvc_times.size() > gitvc_count) {
-                            ti_list->set_delay(gitvc, gitvc_times.at(0));
-                            ti_list->enable(gitvc, now + gitvc_wait_time);
-                            logger.info("Setting first GITVC for " + std::to_string(gitvc_times.at(0)) + " microseconds.", now);
+                            ti_list->enable(gitvc, now); // GITVC delay is initially set to gitvc_wait_time in timed_item_list.cpp
+			    logger.info("Setting GITVC to start after " + std::to_string(gitvc_wait_time) + " microseconds", now);
                             logger.info("Total " + std::to_string(gitvc_times.size()) + " gitvc opens", now);
 			    gitvc_on = true;
-                            gitvc_count++;
+                            // gitvc_count++;
                           }
 
                         break;
                         // Enable the second igntion thing:
                         // TODO
                     }
-                    if (ti->action == ign3) {
+                    if (ti->action == ign3) { // End the burn and gitvc
                         logger.info("Ending burn.", now);
                         burn_on = false;
                         logger.debug("Writing main valve off from timed item.", now);
@@ -282,8 +280,11 @@ void main_worker::worker_method() {
 
 
                         ti_list->disable(gitvc);
+			gitvc_count = INT_MAX; // Added security for shutting off GITVC
                         logger.debug("Ending GITVC from timed item.", now);
                         bcm2835_gpio_write(GITVC_VALVE, HIGH);
+
+			bcm2835_gpio_write(WATER_VALVE, LOW);
                         break;
                     }
                     if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
@@ -317,8 +318,7 @@ void main_worker::worker_method() {
                 }
                 break;
             }
-            case ign1: {
-                // Set the ignition on and then enable ign2.
+            case ign1: { // Initial setting of ignition on. Also starts water.
                 logger.info("Beginning ignition process", now);
 		if (ignition_on) {
 		    bcm2835_gpio_write(IGN_START, HIGH);
@@ -330,7 +330,11 @@ void main_worker::worker_method() {
                 //todo original was timed_list[10], which is now ign2_ti?
                 // ign2_ti.enable(now);
                 // ti_list->tis[10].enable(now);
+		
+		// Enable main valve on after the preignite period
                 ti_list->enable(ign2, now);
+
+                bcm2835_gpio_write(WATER_VALVE, HIGH);
                 break;
             }
             case (wq_none): {

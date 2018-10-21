@@ -30,13 +30,50 @@ circular_buffer buff(CIRC_SIZE);
  */
 int main(int argc, char **argv) {
     unsigned int port, preignite_ms, hotflow_ms;
-    bool temp_pressure_shutoff;
-    std::vector<int> temp_gitvc_times;
     int result;
+    char* filename;
 
-    init_config(&port, &use_gitvc, &time_between_gitvc, &gitvc_wait_time, &gitvc_times, &pressure_shutoff, &pressure_slope, &pressure_yint, &pressure_max, &pressure_min, &preignite_ms, &hotflow_ms, &ignition_on);
+    if (argc < 2) {
+	    std::cout << "Please provide a config file filename!\n";
+	    return 1;
+    } else {
+	    filename = argv[1];
+    }
 
-    std::cout << gitvc_times.at(0) << std::endl;
+    // Store the config values in these variables
+    init_config(&port,
+		&use_gitvc,
+		&time_between_gitvc,
+		&gitvc_wait_time,
+		&gitvc_times,
+		&pressure_shutoff,
+		&pressure_slope,
+		&pressure_yint,
+		&pressure_max,
+		&pressure_min,
+		&preignite_ms,
+		&hotflow_ms,
+		&ignition_on,
+		filename);
+
+    std::cout << "Reading config options from file: " << argv[1] << '\n';
+
+    std::cout << "Hotflow time: " << hotflow_ms << '\n';
+    std::cout << "Ignition:" << ignition_on << std::endl;
+    std::cout << "Use pressure shutoff:: " << pressure_shutoff << '\n';
+    std::cout << "pressure slope: " << pressure_slope << '\n';
+    std::cout << "Pressure y-intercept: " << pressure_yint << '\n';
+    std::cout << "Pressure max: " << pressure_max << '\n';
+    std::cout << "Pressure min: " << pressure_min << '\n';
+    std::cout << "Time before ignition: " << preignite_ms << '\n';
+    std::cout << "Use GITVC: " << use_gitvc << '\n';
+
+    if (use_gitvc) {
+    	std::cout << "\n Time between GITVC: " << time_between_gitvc << '\n';
+
+    	for(int i = 0; i < gitvc_times.size(); i++)
+		std::cout << "    " << gitvc_times[i] << '\n';
+    }
 
     preignite_us = preignite_ms * 1000;
     hotflow_us = hotflow_ms * 1000;
@@ -86,7 +123,6 @@ int main(int argc, char **argv) {
 
     // Set the base time so that we have no risk of overflow.
     set_base_time();
-
 
 
     // Now we create our network and hardware workers:
