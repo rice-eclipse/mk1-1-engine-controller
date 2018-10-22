@@ -33,12 +33,12 @@ add_executable(threaded_adc_test ${SOURCE_FILES_THREADED_ADC_TEST}) #A simple ex
 
 
 #DEPENDENCIES##############################################################
-add_dependencies(threaded_adc_test adc_lib.a circ_buff.a timestamps.a listener.a)
-add_dependencies(spi_adc_test adc_lib.a)
+add_dependencies(threaded_adc_test adc_lib circ_buff timestamps listener)
+add_dependencies(spi_adc_test adc_lib)
 
 ###########################################################################
 
 #LINKING###################################################################
 target_link_libraries(spi_adc_test bcm2835)
-target_link_libraries(threaded_adc_test bcm2835 adc_lib.a pthread circ_buff.a timestamps.a listener.a)
+target_link_libraries(threaded_adc_test bcm2835 adc_lib pthread circ_buff timestamps listener)
 ###########################################################################

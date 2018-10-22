@@ -1,5 +1,5 @@
 #Subdirectory for testing:
-add_library(libtest.a catch_main.cpp)
+add_library(test catch_main.cpp)
 enable_testing()
 
 macro(add_catch_test name)
