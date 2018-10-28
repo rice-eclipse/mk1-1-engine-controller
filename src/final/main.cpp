@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <iostream>
 #include <bcm2835.h>
+#include <exception>
 #include "initialization.hpp"
 #include "../adc/lib/adc_block.hpp"
 #include "pins.hpp"
@@ -14,6 +15,7 @@
 #include "ini_config.hpp"
 #include "main_network_worker.hpp"
 #include "timed_item_list.hpp"
+#include "../util/useful_exceptions.hpp"
 
 circular_buffer buff(CIRC_SIZE);
 
@@ -41,20 +43,26 @@ int main(int argc, char **argv) {
     }
 
     // Store the config values in these variables
-    init_config(&port,
-                &use_gitvc,
-                &time_between_gitvc,
-                &gitvc_wait_time,
-                &gitvc_times,
-                &pressure_shutoff,
-                &pressure_slope,
-                &pressure_yint,
-                &pressure_max,
-                &pressure_min,
-                &preignite_ms,
-                &hotflow_ms,
-                &ignition_on,
-                filename);
+    try {
+		init_config(&port,
+					&use_gitvc,
+					&time_between_gitvc,
+					&gitvc_wait_time,
+					&gitvc_times,
+					&pressure_shutoff,
+					&pressure_slope,
+					&pressure_yint,
+					&pressure_max,
+					&pressure_min,
+					&preignite_ms,
+					&hotflow_ms,
+					&ignition_on,
+					filename);
+	} catch (std::exception* pEx) {
+		std::cerr << pEx->what() << std::endl;
+		delete pEx;
+		return 1;
+	}
 
     std::cout << "Reading config options from file: " << argv[1] << '\n';
 

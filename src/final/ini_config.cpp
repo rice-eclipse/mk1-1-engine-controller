@@ -10,6 +10,8 @@
 #include <iterator>
 #include <fstream>
 #include <string>
+#include <exception>
+#include "../util/useful_exceptions.hpp"
 
 // Global variables_map for config values
 po::variables_map config_map;
@@ -53,6 +55,10 @@ po::variables_map init_config(unsigned int *port,
 
     //todo change dir if needed
     std::ifstream in("../../../src/final/" + std::string(filename) + ".ini");
+    if (!in) {
+		// ini not found, throw exception to be handled in main
+		throw new fileNotFoundException(new std::string(filename));
+	}
     po::store(po::parse_config_file(in, desc), config_map);
     in.close();
     po::notify(config_map);
