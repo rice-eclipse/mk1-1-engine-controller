@@ -42,3 +42,7 @@ add_dependencies(spi_adc_test adc_lib)
 target_link_libraries(spi_adc_test bcm2835)
 target_link_libraries(threaded_adc_test bcm2835 adc_lib pthread circ_buff timestamps listener)
 ###########################################################################
+
+#SETTING FILENAMES#########################################################
+set_property(TARGET adc_lib circ_buff fake_adc fake_bcm listener logger test timestamps PROPERTY PREFIX "")
+###########################################################################
