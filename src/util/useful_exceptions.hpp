@@ -22,7 +22,7 @@ class fileNotFoundException : public std::exception {
 			delete pFilename;
 			delete pMsg;
 		}
-		virtual const char* what() const throw() {
+		const char* what() const noexcept {
 			return pMsg->data();
 		}
 };
