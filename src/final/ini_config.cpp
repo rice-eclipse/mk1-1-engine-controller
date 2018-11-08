@@ -52,7 +52,7 @@ po::variables_map init_config(unsigned int *port,
         ("Pressure.Pressure_min", po::value<int>(pressure_min)->default_value(300), "set min pressure cutoff");
 
     //todo change dir if needed
-    std::ifstream in("../../../src/final/" + std::string(filename) + ".ini");
+    std::ifstream in(filename);
     po::store(po::parse_config_file(in, desc), config_map);
     in.close();
     po::notify(config_map);

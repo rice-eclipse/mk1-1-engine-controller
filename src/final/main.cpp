@@ -78,8 +78,6 @@ int main(int argc, char **argv) {
     preignite_us = preignite_ms * 1000;
     hotflow_us = hotflow_ms * 1000;
 
-    std::cout << "hotflow_us after multiplication: " << hotflow_us << '\n';
-
     if (preignite_us < 0 || preignite_us > 5000000) {
         std::cerr << "Incorrect preignite time." << std::endl;
         return 1;
@@ -136,12 +134,8 @@ int main(int argc, char **argv) {
 
     qn.enqueue(initial);
 
-
     main_network_worker nw(qn, qw, port, buff);
-
-    std::cout << "Hotflow_us right before main_worker: " << hotflow_us << '\n';
     main_worker cw(qn, qw, buff, adcs, &nw);
-    std::cout << "Hotflow_us right after main_worker: " << hotflow_us << '\n';
 
     nw.start();
     cw.start();

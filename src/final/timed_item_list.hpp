@@ -32,8 +32,6 @@ class timed_item_list {
         timed_item gitvc_ti;
         // todo add timed items for mk2
 
-        // timed_item_list() = default;
-
         timed_item_list(uint8_t length, size_t buff_size)
                 : length(length)
                 , buff_size(buff_size)
@@ -63,11 +61,7 @@ class timed_item_list {
             tc3_ti =
                     timed_item(0, TC3_T, new circular_buffer(buff_size), adc_info_t(TC_ADC, true, 6), tc3, true, 0);
 
-            std::cout << "PREIGNITE_US: " << preignite_us << '\n';
-
             ign2_ti = timed_item(0, preignite_us, nullptr, adc_info_t(), ign2, false, 0);
-
-            std::cout << "IGNITION SHUTOFF TIME: " << hotflow_us << '\n';
 
             ign3_ti = timed_item(0, hotflow_us * 1000, nullptr, adc_info_t(), ign3, false, 0);
 

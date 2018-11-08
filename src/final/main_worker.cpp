@@ -19,11 +19,11 @@ network_queue_item null_nqi = {nq_none}; //An item for null args to
 work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
 adc_reading adc_data = {};
 
+timed_item_list* ti_list;
+
 static int ti_count = 13;
 int gitvc_count = 0;
 timestamp_t now = 0;
-
-bool gitvc_on;
 
 // These variables will be initialized from config.ini
 int time_between_gitvc;
@@ -32,14 +32,13 @@ float pressure_slope;
 float pressure_yint;
 int pressure_min;
 int pressure_max;
-// int preignite_us;
-// int hotflow_us;
+bool gitvc_on;
+int preignite_us;
+int hotflow_us;
 bool ignition_on;
 bool pressure_shutoff;
 bool use_gitvc;
 std::vector<int> gitvc_times;
-
-timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
 static void add_timed_item(timed_item &ti) {
     for (int i = 0; i < MAX_TIMED_LIST_LEN; i++) {
@@ -75,6 +74,7 @@ static bool burn_on = false;
 void main_worker::worker_method() {
     network_queue_item nq_item = {};
     work_queue_item wq_item = {};
+    ti_list = new timed_item_list(ti_count, 12 << 17);
     char c;
     int count = 0;
 
