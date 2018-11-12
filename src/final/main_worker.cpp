@@ -258,7 +258,7 @@ void main_worker::worker_method() {
                             ti_list->enable(gitvc, now); // GITVC delay is initially set to gitvc_wait_time in timed_item_list.cpp
 			    logger.info("Setting GITVC to start after " + std::to_string(gitvc_wait_time) + " microseconds", now);
                             logger.info("Total " + std::to_string(gitvc_times.size()) + " gitvc opens", now);
-			    gitvc_on = true;
+			    gitvc_on = false;
                             // gitvc_count++;
                           }
 
