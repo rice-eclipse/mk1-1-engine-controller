@@ -58,3 +58,7 @@ dkms.conf
 # Don't add the build folder's contents.
 build/*
 !build/.gitignore
+
+# Misc. IDE-specific files
+*.cbp
+*.layout
