@@ -3,6 +3,8 @@
 
 #include "queue_items.hpp"
 #include "safe_queue.hpp"
+#include "../adc/lib/adc_block.hpp"
+#include "../final/main_network_worker.hpp"
 
 /**
  * An interface to "visit" an item in a work queue and perform the appropriate
@@ -12,60 +14,71 @@
  * See https://arne-mertz.de/2016/04/visitor-pattern-part-2-enum-based-visitor/
  */
 class work_queue_visitor {
-    private:
+    public:
+        safe_queue<work_queue_item>& qw; // the work queue from the containing worker
+        safe_queue<network_queue_item>& qn; // the network queue from the containing worker
+        adc_block& adcs;
+        main_network_worker* nw_ref;
+
         /**
          * Operation corresponding to wq_process (a worker process).
          */
-        virtual void visitProc(work_queue_item&, safe_queue<work_queue_item>&) = 0;
+        virtual void visitProc(work_queue_item&) = 0;
 
         /**
          * Operation corresponding to wq_timed (a timed item).
          */
-        virtual void visitTimed(work_queue_item&, safe_queue<work_queue_item>&) = 0;
+        virtual void visitTimed(work_queue_item&) = 0;
 
         /**
          * Operation corresponding to ign1 (ignition).
          */
-        virtual void visitIgn(work_queue_item&, safe_queue<work_queue_item>&) = 0;
+        virtual void visitIgn(work_queue_item&) = 0;
 
         /**
          * Operation corresponding to wq_none (an empty queue).
          */
-        virtual void visitNone(work_queue_item&,safe_queue<work_queue_item>&) = 0;
+        virtual void visitNone(work_queue_item&) = 0;
 
         /**
          * Operation for an unknown/unspecified action.
          */
-        virtual void visitDefault(work_queue_item&, safe_queue<work_queue_item>&) = 0;
+        virtual void visitDefault(work_queue_item&) = 0;
 
-    public:
-        work_queue_visitor() { }
+        work_queue_visitor(safe_queue<work_queue_item>& qw,
+                           safe_queue<network_queue_item>& qn,
+                           adc_block& adcs,
+                           main_network_worker* nw_ref)
+                           : qw(qw), qn(qn), adcs(adcs), nw_ref(nw_ref)
+        {
+
+        }
         ~work_queue_visitor() { }
 
         /**
          * Selects the correct task for the given work queue item and its queue,
          * and performs it.
          */
-        void visit(work_queue_item& item, safe_queue<work_queue_item>& qw) {
+        void visit(work_queue_item& item) {
             switch (item.action) {
                 case wq_process: {
-                    visitProc(item, qw);
+                    visitProc(item);
                     break;
                 }
                 case wq_timed: {
-                    visitTimed(item, qw);
+                    visitTimed(item);
                     break;
                 }
                 case ign1: {
-                    visitIgn(item, qw);
+                    visitIgn(item);
                     break;
                 }
                 case wq_none: {
-                    visitNone(item, qw);
+                    visitNone(item);
                     break;
                 }
                 default: {
-                    visitDefault(item, qw);
+                    visitDefault(item);
                     break;
                 }
             }
@@ -75,21 +88,27 @@ class work_queue_visitor {
 /**
  * Work queue visitor that performs the standard tasks for each action.
  */
-class main_work_queue_visitor : work_queue_visitor {
-    // definition of visit methods in queue_visitor.cpp
+class main_work_queue_visitor : public work_queue_visitor {
     public:
-        main_work_queue_visitor() { }
-        ~main_work_queue_visitor() { }
-};
+        void visitProc(work_queue_item&);
 
-/**
- * Network queue visitor that performs the standard tasks for each action.
- */
-class main_network_queue_visitor : work_queue_visitor {
-    // definition of visit methods in queue_visitor.cpp
-    public:
-        main_network_queue_visitor() { }
-        ~main_network_queue_visitor() { }
+        void visitTimed(work_queue_item&);
+
+        void visitIgn(work_queue_item&);
+
+        void visitNone(work_queue_item&);
+
+        void visitDefault(work_queue_item&);
+
+        main_work_queue_visitor(safe_queue<work_queue_item>& qw,
+                                safe_queue<network_queue_item>& qn,
+                                adc_block& adcs,
+                                main_network_worker* nw_ref)
+                                : work_queue_visitor(qw, qn, adcs, nw_ref)
+        {
+
+        }
+        ~main_work_queue_visitor() { }
 };
 
 /**
