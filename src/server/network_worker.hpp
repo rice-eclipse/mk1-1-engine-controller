@@ -16,6 +16,10 @@
 #include <poll.h>
 #include "../util/circular_buffer.hpp"
 #include "../util/timestamps.hpp"
+#include <arpa/inet.h>
+#include<netinet/in.h>
+#include<sys/socket.h>
+#include<sys/types.h>
 
 class network_worker : public worker {
     public:
@@ -23,6 +27,7 @@ class network_worker : public worker {
         int connfd_tcp;
         int connfd_udp;
         bool connected;
+        struct sockaddr sa_udp, sa_tcp;
 
         /**
          * The number of microseconds where no receive has occured before the worker should treat the peer
@@ -44,11 +49,14 @@ class network_worker : public worker {
                 (safe_queue<network_queue_item> &my_qn, safe_queue<work_queue_item> &my_qw, int port,
                  timestamp_t timeout)
                 : worker(my_qn, my_qw)
+                , connected(0)
                 , port(port)
                 , last_recv(0)
                 , timeout(timeout)
                 , connfd_tcp(-1)
                 , connfd_udp(-1)
+                , sa_udp({})
+                , sa_tcp({})
         {
                 last_recv = get_time() - timeout; // Set the last time such that we are immediately timed out.
         };
@@ -87,9 +95,6 @@ class network_worker : public worker {
          * @return Whatever read returned. -2 if poll succeeded but there was nothing to receive. -3 if poll failed.
          */
         ssize_t do_recv(int fd, char *b, size_t nbytes);
-        pollfd pf;
-
-        bool has_acked;
 };
 
 

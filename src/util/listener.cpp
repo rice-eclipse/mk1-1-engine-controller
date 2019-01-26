@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include "listener.hpp"
 
 /*
@@ -81,15 +82,15 @@ int wait_for_connection(int port, sockaddr *sa) {
         fprintf(stderr, "Received request on connfd on %d\n", connfd);
     #endif /*DEBUG_LISTENER*/
 
-    // close(listenfd);
+    close(listenfd);
     return connfd;
 }
 
 int
-create_send_fd(int port, sockaddr *sa) {
+create_send_fd(int port, sockaddr_in *sa) {
     int udp_server_fd;
-    socklen_t sockaddr_len = sizeof(sockaddr_in);
-    struct sockaddr_in udp_server = {};
+    // socklen_t sockaddr_len = sizeof(sockaddr_in);
+    // struct sockaddr_in udp_server = {};
 
     if((udp_server_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
     {
@@ -97,12 +98,14 @@ create_send_fd(int port, sockaddr *sa) {
         exit(-1);
     }
 
-    udp_server.sin_family = AF_INET;
-    udp_server.sin_port = htons((uint16_t) port);
-    udp_server.sin_addr.s_addr = INADDR_ANY;
-    bzero(udp_server.sin_zero, 8);
+    sa->sin_family = AF_INET;
+    sa->sin_port = htons((uint16_t) port);
+    sa->sin_addr.s_addr = htonl(INADDR_ANY);
+    bzero(sa->sin_zero, 8);
 
-//    if(bind(udp_server_fd, (struct sockaddr *)&udp_server, sockaddr_len) == -1)
+    std::cerr << sa->sin_addr.s_addr << std::endl;
+
+//    if(bind(udp_server_fd, (struct sockaddr *)&udp_server, sizeof(struct sockaddr_in)) == -1)
 //    {
 //        perror("bind");
 //        exit(-1);

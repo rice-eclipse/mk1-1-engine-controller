@@ -38,6 +38,6 @@ int wait_for_connection(int port, sockaddr *sa);
 int open_listen(int port);
 
 // TODO
-int create_send_fd(int port, sockaddr *sa);
+int create_send_fd(int port, sockaddr_in *sa);
 
 #endif //SOFTWARE_LISTENER_HPP

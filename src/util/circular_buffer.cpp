@@ -5,7 +5,12 @@
 #include "unistd.h"
 #include <cstring>
 #include <iostream>
+#include <sys/socket.h>
 #include "circular_buffer.hpp"
+#include <arpa/inet.h>
+#include<netinet/in.h>
+#include<sys/socket.h>
+#include<sys/types.h>
 
 //#define DEBUG_CIRC_SEND
 
@@ -95,6 +100,8 @@ ssize_t circular_buffer::write_data(int fd, size_t n, size_t offset) {
 #endif
     ssize_t result;
     result = write(fd, data + offset % this->nbytes, to_send);
+    // result = sendto(fd, data + offset % this->nbytes, to_send, 0, destination, sizeof(struct sockaddr_in));
+
     if (result <= 0) {
         perror("help?");
         std::cerr << "Error while writing." << std::endl;
