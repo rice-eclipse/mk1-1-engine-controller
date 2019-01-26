@@ -92,6 +92,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
         }
 
         default: {
+            // TODO should this ever happen?
             return network_worker::process_nqi(nqi);
         }
     }

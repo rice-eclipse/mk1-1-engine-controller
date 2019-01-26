@@ -11,19 +11,10 @@
 #include <arpa/inet.h>
 
 void network_worker::worker_method() {
-    /*
-    std::cout << "Size of sht" << sizeof(send_header_t)
-              << " offset of nbytes"
-              << offsetof(send_header_t, nbytes)
-              << "sizeof send_code" << sizeof(send_code)
-              << std::endl;
-              */
     ssize_t read_result;
     char c;
     network_queue_item network_queue_item = {};
     work_queue_item work_queue_item = {};
-
-    pf.events = POLLIN | POLLOUT;
 
     while (1) {
         //std::cout << "Networker entering loop:\n";
@@ -91,7 +82,6 @@ ssize_t network_worker::do_recv(int fd, char *b, size_t nbytes) {
          */
         timestamp_t trecv = get_time();
         this->last_recv = trecv;
-        this->has_acked = false; // No longer need to ack, so ignore these.
     } else if (read_result == 0) {
         /*
          * Check if the file descriptor has closed:
@@ -111,37 +101,30 @@ void network_worker::fail_connection() {
     }
     connfd_tcp = -1;
     connfd_udp = -1;
-    pf.fd = -1;
 
     connected = false;
 }
 
 void network_worker::open_connection() {
-    struct sockaddr_in sa;
-    connfd_tcp = wait_for_connection(port, (struct sockaddr *) &sa);
+    struct sockaddr_in sa_udp = {}, sa_tcp = {};
+
+    connfd_tcp = wait_for_connection(port, (struct sockaddr *) &sa_tcp);
     if (connfd_tcp < 0)
         std::cerr << "Could not open TCP connection fd." << std::endl;
 
     if (config_map["Server.Protocol"].as<std::string>() == "UDP") {
-        connfd_udp = socket(AF_INET, SOCK_DGRAM, 0);
-        sa.sin_port = htons(port); //Destination UDP port is same as listening TCP port
-        if (connect(connfd_udp,(struct sockaddr *) &sa,sizeof(sa))) {
-            connfd_udp = -1;
-            std::cerr << "Could not open UDP connection fd." << std::endl;
-        }
+        connfd_udp = create_send_fd(port, (struct sockaddr*) &sa_udp);
+//        if (connect(connfd_udp,(struct sockaddr *) &sa,sizeof(sa))) {
+//            connfd_udp = -1;
+//            std::cerr << "Could not open UDP connection fd." << std::endl;
+//        }
         std::cout << "Successfully opened UDP socket on " << connfd_udp << "." << std::endl;
     }
-
-    /*
-     * Stuff used to poll the socket:
-     */
-    pf.fd = connfd_tcp;
 
     /*
      * Update the last received and mark that we are connected:
      */
     connected = true;
-    has_acked = false;
     last_recv = get_time();
 }
 
@@ -157,17 +140,3 @@ ssize_t network_worker::send_header(send_code h, size_t nbytes) {
         ssize_t result = write(connfd_tcp, &sh, sizeof(sh));
     }
 }
-
-ssize_t rwrite(int fd, void *b, size_t n) {
-    if (n == 0) {
-        return 0;
-    }
-    ssize_t result = write(fd, b, n);
-
-    if (result <= 0) {
-        std::cerr << "Error while writing?" << std::endl;
-        perror("help me please");
-    }
-
-    return result + rwrite(fd, ((char *)b ) + result, n - result);
-} 

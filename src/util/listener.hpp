@@ -22,7 +22,7 @@
  *
  * Effects:
  *  Listens on the port specified and blocks until a connection is recieved
- *  and then returns the corresponding fildes for the connection.
+ *  and then returns the corresponding file descriptors for the connection.
  *  TODO not sure what is being done with "sa"
  */
 int wait_for_connection(int port, sockaddr *sa);
@@ -36,5 +36,8 @@ int wait_for_connection(int port, sockaddr *sa);
  *   socket or -1 on error.
  */
 int open_listen(int port);
+
+// TODO
+int create_send_fd(int port, sockaddr *sa);
 
 #endif //SOFTWARE_LISTENER_HPP
