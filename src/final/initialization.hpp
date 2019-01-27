@@ -7,9 +7,13 @@
 
 /**
  * Sets all pins and to the default state.
- * @return 0 unless an error occurs.
  */
 void initialize_pins();
+
+/**
+ * Sets all pins to the default state for Titan.
+ */
+void titan_initialize_pins();
 
 /**
  * Initializes all the SPI stuff and ADC stuff.

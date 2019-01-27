@@ -27,6 +27,7 @@ timestamp_t now = 0;
 timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
 
 // These variables will be initialized from config.ini
+int engine_type;
 int time_between_gitvc;
 int gitvc_wait_time;
 float pressure_slope;
@@ -312,7 +313,7 @@ void main_work_queue_visitor::visitIgn(work_queue_item& wq_item) {
     // ti_list->tis[10].enable(now);
 
     // Enable main valve on after the preignite period
-    std::cout << "main_worker setting preignite_us and hotflow_us: " << preignite_us << "    " << hotflow_us << '\n';
+    std::cout << "main_visitor::visitIgn setting preignite_us and hotflow_us: " << preignite_us << "    " << hotflow_us << '\n';
     ti_list->set_delay(ign2, preignite_us);
     ti_list->enable(ign2, now);
 
@@ -327,4 +328,160 @@ void main_work_queue_visitor::visitNone(work_queue_item& wq_item) {
 
 void main_work_queue_visitor::visitDefault(work_queue_item& wq_item) {
     logger.error("Work queue item not handled:" + std::to_string(wq_item.action), now);
+}
+
+// TODO: Titan stuff below, move to its own file?
+
+void titan_work_queue_visitor::visitTimed(work_queue_item& wq_item) {
+    // Pretty much identical to main_work_queue_visitor::visitTimed, just with a
+    // slightly different procedure for handling ign2
+
+    // Get the current time
+    now = get_time();
+
+    // Get the timed item that added this:
+    timed_item *ti = wq_item.extra_datap;
+
+    ti->scheduled = now;
+
+    if (ti->buffer != NULL) {
+        //TODO make a Logger call to debugv
+        /*
+        std::cout << "Reading adc please work" << ti->adc_info.pin << " "
+                    << ti->adc_info.single_channel << " " << (int) ti->adc_info.channel << std::endl;
+
+        std::cout << "Testing ADC read from ADC 2: " << \
+            adcs.read_item(ti->adc_info.pin, true, ti->adc_info.channel) << std::endl;
+        */
+        adc_data.dat = adcs.read_item(ti->adc_info);
+        //adc_data.dat = adcs.read_item(2, ti->adc_info.single_channel, ti->adc_info.channel);
+        //std::cout << "Read value from ADC: " << adc_data.dat << std::endl;
+        //adc_data.dat = count++;
+        //usleep(100);
+        //FIXME switch this.
+
+        if (ti->action == pt_comb && pressure_shutoff) {
+            double pt_cal = pressure_slope * adc_data.dat + pressure_yint;
+            pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05; // Running average
+
+            if ((pressure_avg > pressure_max || pressure_avg < pressure_min) && burn_on) {
+                // Start after 1000ms = 1s.
+                if (now - start_time_nitr > 1000000) {
+                    // GITVC is active low
+                    logger.error("Pressure shutoff: " + std::to_string(pressure_avg) + " . Closing main valve and unsetting ignition.", now);
+                    logger.error("Max/Min set to " + std::to_string(pressure_max) + "/" + std::to_string(pressure_min), now);
+                    logger.error("Slope/y-int set to " + std::to_string(pressure_slope) + "/" + std::to_string(pressure_yint), now);
+
+                    bcm2835_gpio_write(MAIN_VALVE, LOW);
+                    bcm2835_gpio_write(IGN_START, LOW);
+                    bcm2835_gpio_write(GITVC_VALVE, HIGH);
+                    burn_on = false;
+                }
+            }
+        }
+
+        adc_data.t = now;
+        ti->buffer->add_data(&adc_data, sizeof(adc_data));
+        //TODO add some debugv info with information on this logger.(@patrickhan)
+        // Now see if it has been long enough that we should send data:
+        if (now - ti->last_send > SEND_TIME) {
+            size_t bw = ti->buffer->bytes_written.load();
+            logger.debugv("Will do sending", now);
+            // TODO improve this logger (@patrickhan)
+
+            //Send some data:
+            nq_item.action = nq_send;
+            nq_item.nbytes = bw - ti->nbytes_last_send;
+            nq_item.total_bytes = ti->nbytes_last_send;
+            nq_item.data[0] = ti->action; // Include info on which buffer this is from.
+            nq_item.buff = ti->buffer;
+            ti->nbytes_last_send = bw;
+            ti->last_send = now;
+
+            // Write the object if we have something to send and we are connected.
+            if (nw_ref->connected && nq_item.nbytes > 0) {
+                qn.enqueue(nq_item);
+            }
+            // Next we also write the data to a (binary) log file by just directly dumping it from buff.
+            write_from_nqi(nq_item);
+        }
+    } else { // Handle the cases of using ignition stuff.
+        if (ti->action == ign2) { // Close TANK, open VENT, open MAIN_VALVE
+            // ign2_ti.disable();
+            // ign3_ti.enable(now);
+
+            // ti_list->tis[10].disable();
+            // ti_list->tis[11].enable(now);
+
+            ti_list->disable(ign2);
+            ti_list->enable(ign3, now);
+
+            logger.info("Writing tank off, vent on, main valve on from timed item.", now);
+
+            bcm2835_gpio_write(TANK, LOW);
+            bcm2835_gpio_write(VENT, HIGH);
+            bcm2835_gpio_write(MAIN_VALVE, HIGH);
+            start_time_nitr = now;
+            burn_on = true;
+
+            if (use_gitvc && gitvc_times.size() > gitvc_count) {
+                ti_list->enable(gitvc, now); // GITVC delay is initially set to gitvc_wait_time in timed_item_list.cpp
+                logger.info("Setting GITVC to start after " + std::to_string(gitvc_wait_time) + " microseconds", now);
+                logger.info("Total " + std::to_string(gitvc_times.size()) + " gitvc opens", now);
+                gitvc_on = false;
+                // gitvc_count++;
+            }
+
+            // Enable the second igntion thing:
+            // TODO
+        }
+        if (ti->action == ign3) { // After ign2, close MAIN_VALVE and return to default state
+            logger.info("Ending burn.", now);
+            burn_on = false;
+            logger.debug("Writing main valve off from timed item.", now);
+            bcm2835_gpio_write(MAIN_VALVE, LOW);
+
+            // ign3_ti.disable();
+            // ti_list->tis[11].disable();
+            ti_list->disable(ign3);
+
+            logger.debug("Writing ignition off from timed item.", now);
+            bcm2835_gpio_write(IGN_START, LOW);
+
+            ti_list->disable(gitvc);
+            gitvc_count = INT_MAX; // Added security for shutting off GITVC
+            logger.debug("Ending GITVC from timed item.", now);
+            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+
+            bcm2835_gpio_write(WATER_VALVE, LOW);
+        }
+        if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
+
+            if (gitvc_on) { // Currently on, so turn it off
+                // ti_list->disable(gitvc);
+
+                // Disable current GITVC
+                bcm2835_gpio_write(GITVC_VALVE, HIGH);
+                gitvc_on = false;
+                logger.debug("Writing GITVC off from timed item for " + std::to_string(time_between_gitvc) + " microseconds", now);
+
+                // Use ti to turn on new GITVC in after time_between_gitvc time passes
+                ti_list->set_delay(gitvc, time_between_gitvc);
+                ti_list->enable(gitvc, now);
+            } else if (gitvc_times.size() > gitvc_count && burn_on){ // Currently off, so turn it on if we're still igniting
+                // ti_list->disable(gitvc);
+
+                // Re-enable GITVC
+                bcm2835_gpio_write(GITVC_VALVE, LOW);
+                gitvc_on = true;
+                logger.debug("Writing GITVC on from timed item for " + std::to_string(gitvc_times.at(gitvc_count)) + " microseconds", now);
+
+                // Use ti to turn off current GITVC after gitvc_times.at(gitvc_count) time passes
+                ti_list->set_delay(gitvc, gitvc_times.at(gitvc_count));
+                ti_list->enable(gitvc, now);
+
+                gitvc_count++;
+            }
+        }
+    }
 }

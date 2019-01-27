@@ -42,6 +42,7 @@ int main(int argc, char **argv) {
 
     // Store the config values in these variables
     init_config(&port,
+                &engine_type,
                 &use_gitvc,
                 &time_between_gitvc,
                 &gitvc_wait_time,
@@ -58,6 +59,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Reading config options from file: " << argv[1] << '\n';
 
+    std::cout << "Engine type: " << engine_type << '\n';
     std::cout << "Hotflow time: " << hotflow_ms << '\n';
     std::cout << "Ignition:" << ignition_on << std::endl;
     std::cout << "Use pressure shutoff: " << pressure_shutoff << '\n';
@@ -99,7 +101,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    initialize_pins();
+    if (engine_type == 0) {
+        // use the Luna pin init
+        initialize_pins();
+    } else if (engine_type == 1) {
+        // use the Titan pin init
+        titan_initialize_pins();
+    } else {
+        // huh?!
+        std::cerr << "Unknown engine type \'" << engine_type << "\'." << std::endl;
+        return 1;
+    }
 
     if (initialize_spi() != 0) {
         std::cerr << "Could not initialize SPI." << std::endl;
@@ -135,7 +147,14 @@ int main(int argc, char **argv) {
     qn.enqueue(initial);
 
     main_network_worker nw(qn, qw, port, buff);
-    main_worker cw(qn, qw, buff, adcs, &nw);
+
+    work_queue_visitor *wqv;
+    if (engine_type == 0) {
+        wqv = new main_work_queue_visitor(qw, qn, adcs, &nw);
+    } else if (engine_type == 1) {
+        wqv = new titan_work_queue_visitor(qw, qn, adcs, &nw);
+    }
+    main_worker cw(qn, qw, buff, adcs, &nw, wqv);
 
     nw.start();
     cw.start();

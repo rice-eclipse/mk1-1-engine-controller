@@ -8,4 +8,6 @@
 
 void initialize_pins() {};
 
+void titan_initialize_pins() {};
+
 int initialize_spi() {return 0;};

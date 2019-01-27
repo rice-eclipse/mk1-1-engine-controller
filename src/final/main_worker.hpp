@@ -12,6 +12,7 @@
 #include "main_network_worker.hpp"
 #include "../server/queue_visitor.hpp"
 
+extern int engine_type;
 extern int time_between_gitvc;
 extern int gitvc_wait_time;
 extern float pressure_slope;
@@ -37,16 +38,18 @@ class main_worker : public worker {
         adc_block &adcs;
         main_network_worker *nw_ref;
 
-        main_work_queue_visitor *wqv;
+        work_queue_visitor *wqv;
 
         main_worker(safe_queue<network_queue_item> &my_qn, safe_queue<work_queue_item> &my_qw,
-                       circular_buffer &buff, adc_block &adcs, main_network_worker *nw_ref)
+                       circular_buffer &buff, adc_block &adcs, main_network_worker *nw_ref,
+                       work_queue_visitor *wqv)
                 : worker(my_qn, my_qw)
                 , buff(buff)
                 , adcs(adcs)
                 , nw_ref(nw_ref)
+                , wqv(wqv)
         {
-            wqv = new main_work_queue_visitor(my_qw, my_qn, adcs, nw_ref);
+
         }
 
         ~main_worker() {

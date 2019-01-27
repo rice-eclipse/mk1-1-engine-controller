@@ -20,4 +20,8 @@
 #define PT_ADC ADC_1_CS
 #define TC_ADC ADC_1_CS
 
+// defines for Titan
+#define TANK RPI_V2_GPIO_P1_16 // same as GITVC
+#define VENT RPI_V2_GPIO_P1_13 // same as Water
+
 #endif //SOFTWARE_PINS_HPP

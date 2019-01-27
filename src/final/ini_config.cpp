@@ -20,6 +20,7 @@ std::string filename;
 // returns a variables_map containing the config parameters. See Boost::program_options
 // documentation for more information about using po::variables_map
 po::variables_map init_config(unsigned int *port,
+			      int *engine_type,
 			      bool *use_gitvc,
 			      int *time_between_gitvc,
 			      int *gitvc_wait_time,
@@ -38,6 +39,7 @@ po::variables_map init_config(unsigned int *port,
     desc.add_options()
         ("Server.Port", po::value<unsigned int>(port)->required(), "set port for incoming connections")
         ("Server.Protocol", po::value<std::string>()->default_value("TCP"), "set protocol for data streaming (commands are always received over TCP)")
+        ("Control.engine_type", po::value<int>(engine_type)->default_value(0), "set the type of engine (0 = Luna, 1 = Titan)")
         ("Control.use_gitvc", po::value<bool>(use_gitvc)->default_value(false), "set if we are testing gitvc")
         ("Control.Time_between_gitvc", po::value<int>(time_between_gitvc)->default_value(0), "set time between gitvc valve actuations")
         ("Control.Gitvc_wait_time", po::value<int>(gitvc_wait_time)->default_value(0), "set length of ignition before gitvc")
