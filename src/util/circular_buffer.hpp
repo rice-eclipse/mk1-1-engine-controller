@@ -54,6 +54,9 @@ class circular_buffer {
          */
         ssize_t write_data(int fd, size_t n, size_t offset);
 
+        // TODO void * should be send_header_t*. Not for now due to circular include.
+        ssize_t write_data_datagram(int fd, size_t n, size_t offset, void *header, size_t header_size, struct sockaddr *destination);
+
         void zero();
 };
 

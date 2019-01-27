@@ -30,14 +30,14 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
         }
         case (nq_send): {
             circular_buffer *buff = nqi.buff;
+            send_header_t header;
 
-            send_code h = (send_code) nqi.data[0];
+            header.code = (send_code) nqi.data[0];
+            header.nbytes = nqi.nbytes;
 
             // TODO this header should correspond to something from the nqi data.
 
             // TODO error check
-            network_worker::send_header(h, nqi.nbytes);
-
 //            std::cerr << "Preparing header" << std::endl;
 //
 //            send_header_t sh = (send_header_t) {h, nqi.nbytes};
@@ -54,9 +54,6 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
 //                std::cerr << "Copy bytes from buffer failed!" << std::endl;
 //            }
 
-            logger.debug("Writing data: Nbytes: " + std::to_string(nqi.nbytes) + " Type: " + std::to_string(h));
-            int connfd = (connfd_udp != -1) ? connfd_udp : connfd_tcp; //Use UDP if the socket is configured
-
 //            ssize_t bytes_written = 0;
 //            if ((bytes_written = write(connfd, combined_buff, nqi.nbytes)) != nqi.nbytes) {
 //                std:: cerr << "Incorrect number of bytes written: " << "Expected " << nqi.nbytes << ", Actual " << bytes_written << std::endl;
@@ -65,7 +62,7 @@ bool main_network_worker::process_nqi(network_queue_item &nqi) {
 //            sendto(connfd, "abc", 4, 0, &sa_udp, sizeof(struct sockaddr_in));
 //            std::cout << "Sent on UDP" << std::endl;
 
-            if (buff->write_data(connfd, nqi.nbytes, nqi.total_bytes) != 0) {
+            if (buff->write_data_datagram(connfd_udp, nqi.nbytes, nqi.total_bytes, &header, sizeof(send_header_t), &sa_udp) != 0) {
                 std::cerr << "Connection Closed" << std::endl;
                 //exit(0);
             }
