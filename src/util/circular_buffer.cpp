@@ -14,10 +14,12 @@
 
 //#define DEBUG_CIRC_SEND
 
-circular_buffer::circular_buffer(size_t size) : bytes_written(0) {
+circular_buffer::circular_buffer(size_t size)
+    : bytes_written(0)
+    {
     this->nbytes = size;
     this->data = new char[size];
-}
+    }
 
 circular_buffer::~circular_buffer() {
     delete [] this->data;

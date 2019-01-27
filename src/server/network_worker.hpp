@@ -84,7 +84,7 @@ class network_worker : public worker {
          */
         void open_connection();
 
-        ssize_t send_header(send_code h, size_t nbytes);
+        bool send_header(send_code h, size_t nbytes);
 
     protected:
         /**

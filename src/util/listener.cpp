@@ -18,7 +18,7 @@
 int
 open_listen(int port)
 {
-    int listenfd, optval = 1;
+    int listenfd;
     struct sockaddr_in serveraddr = {};
 
     /* Set "listenfd" to a newly created stream socket */
@@ -63,15 +63,14 @@ int wait_for_connection(int port, sockaddr *sa) {
     /* Create a TCP port, and check that it is valid. */
     listenfd = open_listen(port);
     if (listenfd < 0) {
-        // TODO have a procedure (hopefully on a new thread) to create a new port and
-        // start listening again
+        // TODO have a procedure (on a new thread) to create a new port and listen again
         fprintf(stderr, "Failed to open listener on %d\n", port);
         exit(1);
     }
 
     /*
      * Accept a new connection and return the file descriptor of
-     * the client, with the appropriate address already set.
+     * the client.
      */
     if((connfd = accept(listenfd, sa, &clientlen)) == -1) {
         perror("TCP Client Accept Error");
@@ -82,6 +81,7 @@ int wait_for_connection(int port, sockaddr *sa) {
         fprintf(stderr, "Received request on connfd on %d\n", connfd);
     #endif /*DEBUG_LISTENER*/
 
+    // Close this since we only care about what the client sends to us.
     close(listenfd);
     return connfd;
 }
@@ -89,27 +89,19 @@ int wait_for_connection(int port, sockaddr *sa) {
 int
 create_send_fd(int port, sockaddr_in *sa) {
     int udp_server_fd;
-    // socklen_t sockaddr_len = sizeof(sockaddr_in);
-    // struct sockaddr_in udp_server = {};
 
+    // Create a new UDP socket
     if((udp_server_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
     {
         perror("UDP Socket Creation Error");
         exit(-1);
     }
 
+    // These settings must match those on the mission control end
     sa->sin_family = AF_INET;
     sa->sin_port = htons((uint16_t) port);
     sa->sin_addr.s_addr = htonl(INADDR_ANY);
     bzero(sa->sin_zero, 8);
-
-    std::cerr << sa->sin_addr.s_addr << std::endl;
-
-//    if(bind(udp_server_fd, (struct sockaddr *)&udp_server, sizeof(struct sockaddr_in)) == -1)
-//    {
-//        perror("bind");
-//        exit(-1);
-//    }
 
     #ifdef DEBUG_LISTENER
         fprintf(stderr, "Sending on fd %d\n", udp_server_fd);
