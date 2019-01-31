@@ -36,6 +36,7 @@ bool gitvc_on;
 int preignite_us;
 int hotflow_us;
 bool ignition_on;
+int pressure_shutoff_delay;
 bool pressure_shutoff;
 bool use_gitvc;
 std::vector<int> gitvc_times;

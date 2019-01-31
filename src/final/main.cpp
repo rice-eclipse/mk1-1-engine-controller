@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
                 &gitvc_wait_time,
                 &gitvc_times,
                 &pressure_shutoff,
+		&pressure_shutoff_delay,
                 &pressure_slope,
                 &pressure_yint,
                 &pressure_max,
@@ -61,6 +62,7 @@ int main(int argc, char **argv) {
     std::cout << "Hotflow time: " << hotflow_ms << '\n';
     std::cout << "Ignition:" << ignition_on << std::endl;
     std::cout << "Use pressure shutoff: " << pressure_shutoff << '\n';
+    std::cout << "Pressure shutoff delay " << pressure_shutoff_delay << '\n';
     std::cout << "pressure slope: " << pressure_slope << '\n';
     std::cout << "Pressure y-intercept: " << pressure_yint << '\n';
     std::cout << "Pressure max: " << pressure_max << '\n';

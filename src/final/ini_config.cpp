@@ -25,6 +25,7 @@ po::variables_map init_config(unsigned int *port,
 			      int *gitvc_wait_time,
 			      std::vector<int> *gitvc_times,
 			      bool *pressure_shutoff,
+			      int *pressure_shutoff_delay,
 			      float *pressure_slope,
 			      float *pressure_yint,
 			      int *pressure_max,
@@ -46,6 +47,7 @@ po::variables_map init_config(unsigned int *port,
 	    ("Control.Preignite_ms",  po::value<int>(preignite_ms)->required(), "set milliseconds for preignition period")
         ("Control.Hotflow_ms",  po::value<int>(hotflow_ms)->required(), "set milliseconds before beginning hotflow")
         ("Pressure.Pressure_shutoff", po::value<bool>(pressure_shutoff)->default_value(true), "enable/disable pressure cutoff")
+	("Pressure.Pressure_shutoff_delay", po::value<int>(pressure_shutoff_delay)->default_value(2500), "set pressure shutoff delay")
         ("Pressure.Pressure_slope", po::value<float>(pressure_slope)->required(), "set pt_comb slope")
         ("Pressure.Pressure_yint", po::value<float>(pressure_yint)->required(), "set pt_comb y intercept")
         ("Pressure.Pressure_max", po::value<int>(pressure_max)->default_value(800), "set max pressure cutoff")

@@ -21,6 +21,7 @@ extern int preignite_us;
 extern int hotflow_us;
 extern bool ignition_on;
 extern bool pressure_shutoff;
+extern int pressure_shutoff_delay;
 extern bool use_gitvc;
 extern std::vector<int> gitvc_times;
 
