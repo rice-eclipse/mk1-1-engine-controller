@@ -55,10 +55,12 @@ void titan_initialize_pins() {
     bcm2835_gpio_write(MAIN_VALVE, LOW);
 
     bcm2835_gpio_fsel(VENT, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_write(VENT, LOW);
+    bcm2835_gpio_write(VENT, HIGH);
 
     bcm2835_gpio_fsel(TANK, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_write(TANK, LOW);
+    bcm2835_gpio_write(TANK, HIGH);
+
+    // TODO: TANK off is HIGH! fix this elsewhere!
 
     // TODO: still need these?
     // bcm2835_gpio_fsel(VALVE_3, BCM2835_GPIO_FSEL_OUTP);

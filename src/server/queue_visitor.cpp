@@ -418,7 +418,7 @@ void titan_work_queue_visitor::visitTimed(work_queue_item& wq_item) {
 
             logger.info("Writing tank off, vent on, main valve on from timed item.", now);
 
-            bcm2835_gpio_write(TANK, LOW);
+            bcm2835_gpio_write(TANK, HIGH); // TANK off is HIGH, not LOW
             bcm2835_gpio_write(VENT, HIGH);
             bcm2835_gpio_write(MAIN_VALVE, HIGH);
             start_time_nitr = now;
