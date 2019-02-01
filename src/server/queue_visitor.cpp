@@ -141,6 +141,27 @@ void main_work_queue_visitor::visitProc(work_queue_item& wq_item) {
             qw.enqueue(wq_item);
             break;
         }
+	case leak_check: {
+	    logger.info("Entering Titan Leak Check Preset");
+            bcm2835_gpio_write(MAIN_VALVE, HIGH);
+            bcm2835_gpio_write(WATER_VALVE, HIGH);
+            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+	    break;
+	}
+	case fill: {
+	    logger.info("Entering Titan Fill Preset");
+            bcm2835_gpio_write(MAIN_VALVE, HIGH);
+            bcm2835_gpio_write(WATER_VALVE, HIGH);
+            bcm2835_gpio_write(GITVC_VALVE, LOW);
+	    break;
+	}
+	case fill_idle: {
+	    logger.info("Entering Titan Fill Idle Preset");
+            bcm2835_gpio_write(MAIN_VALVE, LOW);
+            bcm2835_gpio_write(WATER_VALVE, HIGH);
+            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+	    break;
+	}
         default: {
             wq_item.action = wq_none;
             qw.enqueue(wq_item);

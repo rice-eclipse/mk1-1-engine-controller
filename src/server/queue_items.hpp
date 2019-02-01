@@ -79,7 +79,10 @@ enum send_code {
     set_water = 19,
     unset_water = 20,
     set_gitvc = 21,
-    unset_gitvc = 22
+    unset_gitvc = 22,
+    leak_check = 23,
+    fill = 24,
+    fill_idle = 25,
 };
 
 struct send_header_t {
