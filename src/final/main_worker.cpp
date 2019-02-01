@@ -192,11 +192,17 @@ void main_worker::worker_method() {
                     //usleep(100);
                     //FIXME switch this.
 
+		    if (now > pressure_shutoff_delay) {
+                        pressure_shutoff = true;
+			} else {
+			      pressure_shutoff = false;
+		          }
+
                     if (ti->action == pt_comb && pressure_shutoff) {
                         double pt_cal = pressure_slope * adc_data.dat + pressure_yint;
                         pressure_avg = pressure_avg * 0.95 + pt_cal * 0.05; // Running average
 
-                        if ((pressure_avg > pressure_max || pressure_avg < pressure_min) && burn_on) {
+                        if ((pressure_avg > pressure_max || pressure_avg < pressure_min) &&  burn_on) {
                             // Start after 1000ms = 1s.
                             if (now - start_time_nitr > 1000000) {
                                 // GITVC is active low
