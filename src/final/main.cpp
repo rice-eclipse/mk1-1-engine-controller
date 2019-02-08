@@ -10,6 +10,7 @@
 #include "pins.hpp"
 #include "../server/queue_items.hpp"
 #include "../server/safe_queue.hpp"
+#include "../server/queue_visitor_imps.hpp"
 #include "main_worker.hpp"
 #include "ini_config.hpp"
 #include "main_network_worker.hpp"

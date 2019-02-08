@@ -1,6 +1,8 @@
-// TODO: deal with the worker queue qw
+/*
+ * Implementations of methods in queue_visitor_imps.hpp
+ */
 
-#include "queue_visitor.hpp"
+#include "queue_visitor_imps.hpp"
 #include <climits>
 #include <unistd.h>
 #include "../util/logger.hpp"
