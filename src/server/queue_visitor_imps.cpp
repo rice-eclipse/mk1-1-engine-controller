@@ -164,6 +164,12 @@ void main_work_queue_visitor::visitProc(work_queue_item& wq_item) {
             bcm2835_gpio_write(GITVC_VALVE, HIGH);
 	    break;
 	}
+	case default: {
+	    logger.info("Entering Titan Default Preset");
+            bcm2835_gpio_write(MAIN_VALVE, LOW);
+            bcm2835_gpio_write(WATER_VALVE, LOW);
+            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+	    break;
         default: {
             wq_item.action = wq_none;
             qw.enqueue(wq_item);
