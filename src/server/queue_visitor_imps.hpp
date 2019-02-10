@@ -13,7 +13,7 @@
  */
 class main_work_queue_visitor : public work_queue_visitor {
     public:
-        void visitProc(work_queue_item&);
+        virtual void visitProc(work_queue_item&); // virtual because overridden by titan_work_queue_visitor
 
         virtual void visitTimed(work_queue_item&); // virtual because overridden by titan_work_queue_visitor
 
@@ -40,6 +40,8 @@ class main_work_queue_visitor : public work_queue_visitor {
  */
 class titan_work_queue_visitor : public main_work_queue_visitor {
     public:
+        void visitProc(work_queue_item&);
+        
         void visitTimed(work_queue_item&);
 
         titan_work_queue_visitor(safe_queue<work_queue_item>& qw,

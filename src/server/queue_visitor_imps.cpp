@@ -120,7 +120,7 @@ void main_work_queue_visitor::visitProc(work_queue_item& wq_item) {
             bcm2835_gpio_write(GITVC_VALVE, LOW);
             break;
         }
-        case unset_gitvc:{
+        case unset_gitvc: {
             logger.info("turning gitvc off on pin " + std::to_string(GITVC_VALVE), now);
             bcm2835_gpio_write(GITVC_VALVE, HIGH);
             break;
@@ -143,33 +143,34 @@ void main_work_queue_visitor::visitProc(work_queue_item& wq_item) {
             qw.enqueue(wq_item);
             break;
         }
-	case leak_check: {
-	    logger.info("Entering Titan Leak Check Preset");
+        case leak_check: {
+            logger.info("Entering Titan Leak Check Preset");
             bcm2835_gpio_write(MAIN_VALVE, HIGH);
             bcm2835_gpio_write(WATER_VALVE, HIGH);
             bcm2835_gpio_write(GITVC_VALVE, HIGH);
-	    break;
-	}
-	case fill: {
-	    logger.info("Entering Titan Fill Preset");
+            break;
+        }
+        case fill: {
+            logger.info("Entering Titan Fill Preset");
             bcm2835_gpio_write(MAIN_VALVE, HIGH);
             bcm2835_gpio_write(WATER_VALVE, HIGH);
             bcm2835_gpio_write(GITVC_VALVE, LOW);
-	    break;
-	}
-	case fill_idle: {
-	    logger.info("Entering Titan Fill Idle Preset");
+            break;
+        }
+        case fill_idle: {
+            logger.info("Entering Titan Fill Idle Preset");
             bcm2835_gpio_write(MAIN_VALVE, LOW);
             bcm2835_gpio_write(WATER_VALVE, HIGH);
             bcm2835_gpio_write(GITVC_VALVE, HIGH);
-	    break;
-	}
-	case default: {
-	    logger.info("Entering Titan Default Preset");
+            break;
+        }
+        case def: {
+            logger.info("Entering Titan Default Preset");
             bcm2835_gpio_write(MAIN_VALVE, LOW);
             bcm2835_gpio_write(WATER_VALVE, LOW);
             bcm2835_gpio_write(GITVC_VALVE, HIGH);
-	    break;
+            break;
+        }
         default: {
             wq_item.action = wq_none;
             qw.enqueue(wq_item);
@@ -359,7 +360,110 @@ void main_work_queue_visitor::visitDefault(work_queue_item& wq_item) {
     logger.error("Work queue item not handled:" + std::to_string(wq_item.action), now);
 }
 
-// TODO: Titan stuff below, move to its own file?
+// Titan stuff below
+
+// this is the same as the main visitor's visitProc for now
+void titan_work_queue_visitor::visitProc(work_queue_item& wq_item) {
+    logger.info("In process case");
+    char c = wq_item.data[0];
+
+    logger.debug("Processing request on worker.");
+
+    switch (c) {
+        // TODO is this doing anything. I don't think so.
+        case '0': {
+            wq_item.action = wq_start;
+            qw.enqueue(wq_item);
+            break;
+        }
+        case '1': {
+            wq_item.action = wq_stop;
+            qw.enqueue(wq_item);
+            break;
+        }
+        case unset_valve: {
+            logger.info("Writing main valve off on pin " + std::to_string(MAIN_VALVE), now);
+            bcm2835_gpio_write(MAIN_VALVE, LOW);
+            break;
+        }
+        case set_valve: {
+            logger.info("Writing main valve on on pin " + std::to_string(MAIN_VALVE), now);
+            bcm2835_gpio_write(MAIN_VALVE, HIGH);
+            break;
+        }
+        case set_water: {
+            logger.info("Turning water on on pin " + std::to_string(WATER_VALVE), now);
+            bcm2835_gpio_write(WATER_VALVE, HIGH);
+            break;
+        }
+        case unset_water: {
+            logger.info("Turning water off on pin " + std::to_string(WATER_VALVE), now);
+            bcm2835_gpio_write(WATER_VALVE, LOW);
+            break;
+        }
+        case set_gitvc: {
+            logger.info("Turning gitvc on on pin " + std::to_string(GITVC_VALVE), now);
+            bcm2835_gpio_write(GITVC_VALVE, LOW);
+            break;
+        }
+        case unset_gitvc: {
+            logger.info("turning gitvc off on pin " + std::to_string(GITVC_VALVE), now);
+            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+            break;
+        }
+        case unset_ignition: {
+            logger.info("Writing ignition off.", now);
+            bcm2835_gpio_write(IGN_START, LOW);
+            logger.info("Writing main valve off.", now);
+            bcm2835_gpio_write(MAIN_VALVE, LOW); // TODO ensure this gets done elsewhere.
+            break;
+        }
+        case set_ignition: {
+            logger.info("Writing ignition on.", now);
+            bcm2835_gpio_write(IGN_START, HIGH);
+            break;
+        }
+        case ign_normal: {
+            logger.info("Beginning ignition process.", now);
+            wq_item.action = ign1;
+            qw.enqueue(wq_item);
+            break;
+        }
+        case leak_check: {
+            logger.info("Entering Titan Leak Check Preset");
+            bcm2835_gpio_write(MAIN_VALVE, HIGH);
+            bcm2835_gpio_write(WATER_VALVE, HIGH);
+            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+            break;
+        }
+        case fill: {
+            logger.info("Entering Titan Fill Preset");
+            bcm2835_gpio_write(MAIN_VALVE, HIGH);
+            bcm2835_gpio_write(WATER_VALVE, HIGH);
+            bcm2835_gpio_write(GITVC_VALVE, LOW);
+            break;
+        }
+        case fill_idle: {
+            logger.info("Entering Titan Fill Idle Preset");
+            bcm2835_gpio_write(MAIN_VALVE, LOW);
+            bcm2835_gpio_write(WATER_VALVE, HIGH);
+            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+            break;
+        }
+        case def: {
+            logger.info("Entering Titan Default Preset");
+            bcm2835_gpio_write(MAIN_VALVE, LOW);
+            bcm2835_gpio_write(WATER_VALVE, LOW);
+            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+            break;
+        }
+        default: {
+            wq_item.action = wq_none;
+            qw.enqueue(wq_item);
+            break;
+        }
+    }
+}
 
 void titan_work_queue_visitor::visitTimed(work_queue_item& wq_item) {
     // Pretty much identical to main_work_queue_visitor::visitTimed, just with a
