@@ -12,7 +12,7 @@
 
 #define MAIN_VALVE RPI_V2_GPIO_P1_11
 #define WATER_VALVE RPI_V2_GPIO_P1_13 // Water
-#define VALVE_3 RPI_V2_GPIO_P1_15
+#define HEATING_TAPE RPI_V2_GPIO_P1_15
 #define GITVC_VALVE RPI_V2_GPIO_P1_16 // GITVC
 #define IGN_START RPI_V2_GPIO_P1_15
 
@@ -21,7 +21,7 @@
 #define TC_ADC ADC_1_CS
 
 // defines for Titan
-#define TANK RPI_V2_GPIO_P1_16 // same as GITVC
-#define VENT RPI_V2_GPIO_P1_13 // same as Water
+#define TANK GITVC_VALVE // same as GITVC
+#define VENT WATER_VALVE // same as Water
 
 #endif //SOFTWARE_PINS_HPP

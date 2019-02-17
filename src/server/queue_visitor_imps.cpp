@@ -457,6 +457,16 @@ void titan_work_queue_visitor::visitProc(work_queue_item& wq_item) {
             bcm2835_gpio_write(GITVC_VALVE, HIGH);
             break;
         }
+	case tape_on: {
+            logger.info("Turning on Heating Tape");
+	    bcm2835_gpio_write(HEATING_TAPE, HIGH);
+	    break;
+	}
+	case tape_off: {
+            logger.info("Turning off Heating Tape");
+	    bcm2835_gpio_write(HEATING_TAPE, HIGH);
+	    break;
+	}
         default: {
             wq_item.action = wq_none;
             qw.enqueue(wq_item);

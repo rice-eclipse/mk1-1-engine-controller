@@ -83,7 +83,9 @@ enum send_code {
     leak_check = 23,
     fill = 24,
     fill_idle = 25,
-    def = 26 // "default" state for Titan
+    def = 26, // "default" state for Titan
+    tape_on = 27,
+    tape_off = 28
 };
 
 struct send_header_t {
