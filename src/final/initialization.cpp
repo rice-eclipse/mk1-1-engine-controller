@@ -60,12 +60,8 @@ void titan_initialize_pins() {
     bcm2835_gpio_fsel(TANK, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(TANK, HIGH);
 
-    // TODO: TANK off is HIGH! fix this elsewhere!
-
-    // TODO: still need these?
-    // bcm2835_gpio_fsel(HEATING_TAPE, BCM2835_GPIO_FSEL_OUTP);
-    // bcm2835_gpio_write(HEATING_TAPE, LOW);
-
+    bcm2835_gpio_fsel(HEATING_TAPE, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(HEATING_TAPE, LOW);
 
     // GITVC_VALVE active low
     bcm2835_gpio_fsel(GITVC_VALVE, BCM2835_GPIO_FSEL_OUTP);
