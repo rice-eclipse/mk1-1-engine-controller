@@ -10,7 +10,8 @@
 #include "pins.hpp"
 #include "../server/queue_items.hpp"
 #include "../server/safe_queue.hpp"
-#include "../server/queue_visitor_imps.hpp"
+#include "../visitor/luna_visitor.hpp"
+#include "../visitor/titan_visitor.hpp"
 #include "main_worker.hpp"
 #include "ini_config.hpp"
 #include "main_network_worker.hpp"
@@ -149,11 +150,11 @@ int main(int argc, char **argv) {
 
     main_network_worker nw(qn, qw, port, buff);
 
-    work_queue_visitor *wqv;
+    worker_visitor *wqv;
     if (engine_type == 0) {
-        wqv = new main_work_queue_visitor(qw, qn, adcs, &nw);
+        wqv = new luna_visitor(qw, qn, adcs, &nw);
     } else if (engine_type == 1) {
-        wqv = new titan_work_queue_visitor(qw, qn, adcs, &nw);
+        wqv = new titan_visitor(qw, qn, adcs, &nw);
     }
     main_worker cw(qn, qw, buff, adcs, &nw, wqv);
 

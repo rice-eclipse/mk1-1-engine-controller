@@ -10,7 +10,7 @@
 #include "../adc/lib/adc_block.hpp"
 #include "../util/timestamps.hpp"
 #include "main_network_worker.hpp"
-#include "../server/queue_visitor.hpp"
+#include "../visitor/worker_visitor.hpp"
 
 extern int engine_type;
 extern int time_between_gitvc;
@@ -38,11 +38,11 @@ class main_worker : public worker {
         adc_block &adcs;
         main_network_worker *nw_ref;
 
-        work_queue_visitor *wqv;
+        worker_visitor *wqv;
 
         main_worker(safe_queue<network_queue_item> &my_qn, safe_queue<work_queue_item> &my_qw,
                        circular_buffer &buff, adc_block &adcs, main_network_worker *nw_ref,
-                       work_queue_visitor *wqv)
+                       worker_visitor *wqv)
                 : worker(my_qn, my_qw)
                 , buff(buff)
                 , adcs(adcs)
