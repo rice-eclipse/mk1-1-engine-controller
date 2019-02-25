@@ -11,45 +11,6 @@
 #include "../final/timed_item_list.hpp"
 #include "../final/main_buff_logger.hpp"
 
-Logger logger("logs/main_worker.log", "main_worker", LOG_DEBUG);
-
-// TODO: plopping all this here for now. Probably want to move it to a more
-// appropriate location at some point.
-
-#define SEND_TIME 500000 //Send every 500ms.
-
-network_queue_item null_nqi = {nq_none}; //An item for null args to
-work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
-adc_reading adc_data = {};
-
-static int ti_count = 13;
-int gitvc_count = 0;
-timestamp_t now = 0;
-
-timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
-
-// These variables will be initialized from config.ini
-int engine_type;
-int time_between_gitvc;
-int gitvc_wait_time;
-float pressure_slope;
-float pressure_yint;
-int pressure_min;
-int pressure_max;
-bool gitvc_on;
-int preignite_us;
-int hotflow_us;
-bool ignition_on;
-bool pressure_shutoff;
-bool use_gitvc;
-std::vector<int> gitvc_times;
-
-static timestamp_t start_time_nitr = 0;
-static double pressure_avg = 700;
-static bool burn_on = false;
-
-network_queue_item nq_item = { };
-
 void titan_visitor::visitProc(work_queue_item& wq_item) {
     logger.info("In process case");
     char c = wq_item.data[0];
@@ -244,14 +205,6 @@ void titan_visitor::visitTimed(work_queue_item& wq_item) {
             start_time_nitr = now;
             burn_on = true;
 
-            if (use_gitvc && gitvc_times.size() > gitvc_count) {
-                ti_list->enable(gitvc, now); // GITVC delay is initially set to gitvc_wait_time in timed_item_list.cpp
-                logger.info("Setting GITVC to start after " + std::to_string(gitvc_wait_time) + " microseconds", now);
-                logger.info("Total " + std::to_string(gitvc_times.size()) + " gitvc opens", now);
-                gitvc_on = false;
-                // gitvc_count++;
-            }
-
             // Enable the second igntion thing:
             // TODO
         }
@@ -269,39 +222,32 @@ void titan_visitor::visitTimed(work_queue_item& wq_item) {
             bcm2835_gpio_write(IGN_START, LOW);
 
             ti_list->disable(gitvc);
-            gitvc_count = INT_MAX; // Added security for shutting off GITVC
             logger.debug("Ending GITVC from timed item.", now);
             bcm2835_gpio_write(GITVC_VALVE, HIGH);
 
             bcm2835_gpio_write(WATER_VALVE, LOW);
         }
-        if (ti->action == gitvc) { // Should only reach here once GITVC is set initially
-
-            if (gitvc_on) { // Currently on, so turn it off
-                // ti_list->disable(gitvc);
-
-                // Disable current GITVC
-                bcm2835_gpio_write(GITVC_VALVE, HIGH);
-                gitvc_on = false;
-                logger.debug("Writing GITVC off from timed item for " + std::to_string(time_between_gitvc) + " microseconds", now);
-
-                // Use ti to turn on new GITVC in after time_between_gitvc time passes
-                ti_list->set_delay(gitvc, time_between_gitvc);
-                ti_list->enable(gitvc, now);
-            } else if (gitvc_times.size() > gitvc_count && burn_on){ // Currently off, so turn it on if we're still igniting
-                // ti_list->disable(gitvc);
-
-                // Re-enable GITVC
-                bcm2835_gpio_write(GITVC_VALVE, LOW);
-                gitvc_on = true;
-                logger.debug("Writing GITVC on from timed item for " + std::to_string(gitvc_times.at(gitvc_count)) + " microseconds", now);
-
-                // Use ti to turn off current GITVC after gitvc_times.at(gitvc_count) time passes
-                ti_list->set_delay(gitvc, gitvc_times.at(gitvc_count));
-                ti_list->enable(gitvc, now);
-
-                gitvc_count++;
-            }
-        }
     }
+}
+
+void titan_visitor::visitIgn(work_queue_item& wq_item) {
+    now = get_time();
+    logger.info("Beginning ignition process", now);
+    if (ignition_on) {
+        bcm2835_gpio_write(IGN_START, HIGH);
+        logger.info("Hotflow on", now);
+    } else {
+        logger.info("Hotflow not on due to configuration", now);
+    }
+
+    //todo original was timed_list[10], which is now ign2_ti?
+    // ign2_ti.enable(now);
+    // ti_list->tis[10].enable(now);
+
+    // Enable main valve on after the preignite period
+    std::cout << "main_visitor::visitIgn setting preignite_us and hotflow_us: " << preignite_us << "    " << hotflow_us << '\n';
+    ti_list->set_delay(ign2, preignite_us);
+    ti_list->enable(ign2, now);
+
+    ti_list->set_delay(ign3, hotflow_us);
 }

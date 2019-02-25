@@ -10,23 +10,24 @@
 #include "pins.hpp"
 #include "../server/queue_items.hpp"
 #include "../server/safe_queue.hpp"
+#include "../visitor/worker_visitor.hpp"
 #include "../visitor/luna_visitor.hpp"
 #include "../visitor/titan_visitor.hpp"
 #include "main_worker.hpp"
 #include "ini_config.hpp"
 #include "main_network_worker.hpp"
-#include "timed_item_list.hpp"
+// #include "timed_item_list.hpp"
 
 circular_buffer buff(CIRC_SIZE);
 
 /**
  * A target that runs the final code and does everything.
  *
- * Usage final <Port>
+ * Usage final <filename>
  *
  * Requires the following arguments:
- *   <Port>
- *      Sets the port on which the program listens for connections.
+ *   <filename>
+ *      Sets configuration file.
  *
  * @return 0 unless an error occurs.
  */
@@ -97,7 +98,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-
     if (!bcm2835_init()) {
         std::cerr << "bcm2835_init failed. Are you running as root??\n" << std::endl;
         return 1;
@@ -138,10 +138,9 @@ int main(int argc, char **argv) {
     // Set the base time so that we have no risk of overflow.
     set_base_time();
 
-
     // Now we create our network and hardware workers:
-    safe_queue<network_queue_item> qn (null_nqi);
-    safe_queue<work_queue_item> qw (null_wqi);
+    safe_queue<network_queue_item> qn ({nq_none});
+    safe_queue<work_queue_item> qw ({wq_none});
 
     network_queue_item initial = {};
     initial.action = nq_recv;

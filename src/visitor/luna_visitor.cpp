@@ -11,42 +11,6 @@
 #include "../final/timed_item_list.hpp"
 #include "../final/main_buff_logger.hpp"
 
-#define SEND_TIME 500000 //Send every 500ms.
-
-Logger logger("logs/main_worker.log", "main_worker", LOG_DEBUG);
-
-network_queue_item null_nqi = {nq_none}; //An item for null args to
-work_queue_item null_wqi = {wq_none}; //An object with the non-matching action to do nothing.
-adc_reading adc_data = {};
-
-static int ti_count = 13;
-int gitvc_count = 0;
-timestamp_t now = 0;
-
-timed_item_list* ti_list = new timed_item_list(ti_count, 12 << 17);
-
-// These variables will be initialized from config.ini
-int engine_type;
-int time_between_gitvc;
-int gitvc_wait_time;
-float pressure_slope;
-float pressure_yint;
-int pressure_min;
-int pressure_max;
-bool gitvc_on;
-int preignite_us;
-int hotflow_us;
-bool ignition_on;
-bool pressure_shutoff;
-bool use_gitvc;
-std::vector<int> gitvc_times;
-
-static timestamp_t start_time_nitr = 0;
-static double pressure_avg = 700;
-static bool burn_on = false;
-
-network_queue_item nq_item = { };
-
 void luna_visitor::visitProc(work_queue_item& wq_item) {
     logger.info("In process case");
     char c = wq_item.data[0];

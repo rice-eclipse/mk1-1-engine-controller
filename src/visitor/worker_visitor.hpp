@@ -2,13 +2,32 @@
  * Defines interfaces for worker visitors for Luna and Titan.
  */
 
-#ifndef SOFTWARE_QUEUE_VISITOR_HPP
-#define SOFTWARE_QUEUE_VISITOR_HPP
+#ifndef WORKER_VISITOR_HPP
+#define WORKER_VISITOR_HPP
 
-#include "../server/queue_items.hpp"
-#include "../server/safe_queue.hpp"
-#include "../adc/lib/adc_block.hpp"
-#include "../final/main_network_worker.hpp"
+#define SEND_TIME 500000 //Send every 500ms.
+
+#include "../final/timed_item_list.hpp"
+#include "../util/logger.hpp"
+
+extern int engine_type;
+extern int time_between_gitvc;
+extern int gitvc_wait_time;
+extern float pressure_slope;
+extern float pressure_yint;
+extern int pressure_min;
+extern int pressure_max;
+extern int preignite_us;
+extern int hotflow_us;
+extern bool ignition_on;
+extern bool pressure_shutoff;
+extern bool use_gitvc;
+extern std::vector<int> gitvc_times;
+
+struct adc_reading {
+    timestamp_t dat;
+    uint64_t t;
+};
 
 /**
  * An interface to "visit" an item in a work queue and perform the appropriate
@@ -23,6 +42,16 @@ class worker_visitor {
         safe_queue<network_queue_item>& qn; // the network queue from the containing worker
         adc_block& adcs;
         main_network_worker* nw_ref;
+
+        Logger logger;
+        network_queue_item nq_item;
+        adc_reading adc_data;
+
+        timestamp_t now;
+        timed_item_list *ti_list;
+        timestamp_t start_time_nitr;
+        double pressure_avg;
+        bool burn_on;
 
         /**
          * Operation corresponding to wq_process (a worker process).
@@ -50,43 +79,35 @@ class worker_visitor {
         void visitDefault(work_queue_item&);
 
         worker_visitor(safe_queue<work_queue_item>& qw,
-                           safe_queue<network_queue_item>& qn,
-                           adc_block& adcs,
-                           main_network_worker* nw_ref)
-                           : qw(qw), qn(qn), adcs(adcs), nw_ref(nw_ref)
+                       safe_queue<network_queue_item>& qn,
+                       adc_block& adcs,
+                       main_network_worker* nw_ref)
+                        : qw(qw), qn(qn), adcs(adcs), nw_ref(nw_ref)
+                        , logger(Logger("logs/main_worker.log", "main_worker", LOG_DEBUG))
+                        , ti_list(new timed_item_list(TI_COUNT, 12 << 17))
+                        , nq_item({})
+                        , adc_data({})
+                        , now(0)
+                        , start_time_nitr(0)
+                        , pressure_avg(700)
+                        , burn_on(false)
         {
-
+            // TODO a somewhat hacky fix to prevent a circular include between
+            // worker_visitor.hpp and timed_item_list.hpp
+            ti_list->set_delay(ign2, preignite_us);
+            ti_list->set_delay(ign3, hotflow_us);
+            ti_list->set_delay(gitvc, gitvc_wait_time);
         }
-        ~worker_visitor() { }
+
+        ~worker_visitor() = default;
 
         /**
          * Selects the correct task for the given work queue item and its queue,
          * and performs it.
          */
-        void visit(work_queue_item& item) {
-            switch (item.action) {
-                case wq_process: {
-                    visitProc(item);
-                    break;
-                }
-                case wq_timed: {
-                    visitTimed(item);
-                    break;
-                }
-                case ign1: {
-                    visitIgn(item);
-                    break;
-                }
-                case wq_none: {
-                    visitNone(item);
-                    break;
-                }
-                default: {
-                    visitDefault(item);
-                    break;
-                }
-            }
-        }
+        void visit(work_queue_item& item);
+
+        void check_ti_list(timestamp_t t, safe_queue<work_queue_item> &qw);
 };
 
-#endif // SOFTWARE_QUEUE_VISITOR_HPP
+#endif // WORKER_VISITOR_HPP

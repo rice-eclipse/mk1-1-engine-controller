@@ -12,11 +12,11 @@
  */
 class titan_visitor : public worker_visitor {
     public:
-        void visitProc(work_queue_item&);
+        void visitProc(work_queue_item&) override;
         
-        void visitTimed(work_queue_item&);
+        void visitTimed(work_queue_item&) override;
 
-        void visitIgn(work_queue_item&);
+        void visitIgn(work_queue_item&) override;
 
         titan_visitor(safe_queue<work_queue_item>& qw,
                                  safe_queue<network_queue_item>& qn,
@@ -26,7 +26,8 @@ class titan_visitor : public worker_visitor {
         {
 
         }
-        ~titan_visitor() { }
+
+        ~titan_visitor() = default;
 };
 
 #endif //TITAN_VISITOR_HPP

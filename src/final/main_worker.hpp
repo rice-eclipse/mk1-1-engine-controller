@@ -12,24 +12,6 @@
 #include "main_network_worker.hpp"
 #include "../visitor/worker_visitor.hpp"
 
-extern int engine_type;
-extern int time_between_gitvc;
-extern int gitvc_wait_time;
-extern float pressure_slope;
-extern float pressure_yint;
-extern int pressure_min;
-extern int pressure_max;
-extern int preignite_us;
-extern int hotflow_us;
-extern bool ignition_on;
-extern bool pressure_shutoff;
-extern bool use_gitvc;
-extern std::vector<int> gitvc_times;
-
-struct adc_reading {
-    timestamp_t dat;
-    uint64_t t;
-};
 extern struct adc_reading adcd;
 
 class main_worker : public worker {
