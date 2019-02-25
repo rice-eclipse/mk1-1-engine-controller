@@ -56,17 +56,17 @@ class worker_visitor {
         /**
          * Operation corresponding to wq_process (a worker process).
          */
-        virtual void visitProc(work_queue_item&) = 0;
+        virtual void visitProc(work_queue_item&);
 
         /**
          * Operation corresponding to wq_timed (a timed item).
          */
-        virtual void visitTimed(work_queue_item&) = 0;
+        virtual void visitTimed(work_queue_item&);
 
         /**
          * Operation corresponding to ign1 (ignition).
          */
-        virtual void visitIgn(work_queue_item&) = 0;
+        virtual void visitIgn(work_queue_item&);
 
         /**
          * Operation corresponding to wq_none (an empty queue).

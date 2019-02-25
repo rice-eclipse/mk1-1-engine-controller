@@ -16,8 +16,6 @@ class titan_visitor : public worker_visitor {
         
         void visitTimed(work_queue_item&) override;
 
-        void visitIgn(work_queue_item&) override;
-
         titan_visitor(safe_queue<work_queue_item>& qw,
                                  safe_queue<network_queue_item>& qn,
                                  adc_block& adcs,
