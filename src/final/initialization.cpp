@@ -39,6 +39,42 @@ void initialize_pins() {
     return;
 }
 
+void titan_initialize_pins() {
+    // Set all the ADC chip selects to HIGH so that they don't interfere.
+    bcm2835_gpio_fsel(ADC_0_CS, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(ADC_0_CS, HIGH);
+
+    bcm2835_gpio_fsel(ADC_1_CS, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(ADC_1_CS, HIGH);
+
+    bcm2835_gpio_fsel(ADC_2_CS, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(ADC_2_CS, HIGH);
+
+    // Set all the ignition and relay outputs to LOW so that they don't trigger.
+    bcm2835_gpio_fsel(MAIN_VALVE, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(MAIN_VALVE, LOW);
+
+    bcm2835_gpio_fsel(VENT, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(VENT, LOW); // VENT LOW is open, HIGH is closed
+
+    bcm2835_gpio_fsel(TANK, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(TANK, HIGH);
+
+    // TODO: TANK off is HIGH! fix this elsewhere!
+
+    // TODO: still need these?
+    // bcm2835_gpio_fsel(VALVE_3, BCM2835_GPIO_FSEL_OUTP);
+    // bcm2835_gpio_write(VALVE_3, LOW);
+
+
+    // GITVC_VALVE active low
+    bcm2835_gpio_fsel(GITVC_VALVE, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(GITVC_VALVE, HIGH);
+
+    bcm2835_gpio_fsel(IGN_START, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(IGN_START, LOW);
+}
+
 int initialize_spi() {
 
     if (!bcm2835_spi_begin()) {

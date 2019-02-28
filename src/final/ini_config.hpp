@@ -13,6 +13,7 @@
 namespace po = boost::program_options;
 
 po::variables_map init_config(unsigned int *port,
+			      int *engine_type, // for now, either 0 = Luna or 1 = Titan
 			      bool *use_gitvc,
 			      int *time_between_gitvc,
 			      int *gitvc_wait_time,

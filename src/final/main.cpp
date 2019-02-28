@@ -10,21 +10,24 @@
 #include "pins.hpp"
 #include "../server/queue_items.hpp"
 #include "../server/safe_queue.hpp"
+#include "../visitor/worker_visitor.hpp"
+#include "../visitor/luna_visitor.hpp"
+#include "../visitor/titan_visitor.hpp"
 #include "main_worker.hpp"
 #include "ini_config.hpp"
 #include "main_network_worker.hpp"
-#include "timed_item_list.hpp"
+// #include "timed_item_list.hpp"
 
 circular_buffer buff(CIRC_SIZE);
 
 /**
  * A target that runs the final code and does everything.
  *
- * Usage final <Port>
+ * Usage final <filename>
  *
  * Requires the following arguments:
- *   <Port>
- *      Sets the port on which the program listens for connections.
+ *   <filename>
+ *      Sets configuration file.
  *
  * @return 0 unless an error occurs.
  */
@@ -42,6 +45,7 @@ int main(int argc, char **argv) {
 
     // Store the config values in these variables
     init_config(&port,
+                &engine_type,
                 &use_gitvc,
                 &time_between_gitvc,
                 &gitvc_wait_time,
@@ -58,6 +62,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Reading config options from file: " << argv[1] << '\n';
 
+    std::cout << "Engine type: " << engine_type << '\n';
     std::cout << "Hotflow time: " << hotflow_ms << '\n';
     std::cout << "Ignition:" << ignition_on << std::endl;
     std::cout << "Use pressure shutoff: " << pressure_shutoff << '\n';
@@ -93,13 +98,22 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-
     if (!bcm2835_init()) {
         std::cerr << "bcm2835_init failed. Are you running as root??\n" << std::endl;
         return 1;
     }
 
-    initialize_pins();
+    if (engine_type == 0) {
+        // use the Luna pin init
+        initialize_pins();
+    } else if (engine_type == 1) {
+        // use the Titan pin init
+        titan_initialize_pins();
+    } else {
+        // huh?!
+        std::cerr << "Unknown engine type \'" << engine_type << "\'." << std::endl;
+        return 1;
+    }
 
     if (initialize_spi() != 0) {
         std::cerr << "Could not initialize SPI." << std::endl;
@@ -124,10 +138,9 @@ int main(int argc, char **argv) {
     // Set the base time so that we have no risk of overflow.
     set_base_time();
 
-
     // Now we create our network and hardware workers:
-    safe_queue<network_queue_item> qn (null_nqi);
-    safe_queue<work_queue_item> qw (null_wqi);
+    safe_queue<network_queue_item> qn ({nq_none});
+    safe_queue<work_queue_item> qw ({wq_none});
 
     network_queue_item initial = {};
     initial.action = nq_recv;
@@ -135,7 +148,14 @@ int main(int argc, char **argv) {
     qn.enqueue(initial);
 
     main_network_worker nw(qn, qw, port, buff);
-    main_worker cw(qn, qw, buff, adcs, &nw);
+
+    worker_visitor *wqv;
+    if (engine_type == 0) {
+        wqv = new luna_visitor(qw, qn, adcs, &nw);
+    } else if (engine_type == 1) {
+        wqv = new titan_visitor(qw, qn, adcs, &nw);
+    }
+    main_worker cw(qn, qw, buff, adcs, &nw, wqv);
 
     nw.start();
     cw.start();

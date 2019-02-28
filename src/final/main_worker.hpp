@@ -10,24 +10,8 @@
 #include "../adc/lib/adc_block.hpp"
 #include "../util/timestamps.hpp"
 #include "main_network_worker.hpp"
+#include "../visitor/worker_visitor.hpp"
 
-extern int time_between_gitvc;
-extern int gitvc_wait_time;
-extern float pressure_slope;
-extern float pressure_yint;
-extern int pressure_min;
-extern int pressure_max;
-extern int preignite_us;
-extern int hotflow_us;
-extern bool ignition_on;
-extern bool pressure_shutoff;
-extern bool use_gitvc;
-extern std::vector<int> gitvc_times;
-
-struct adc_reading {
-    timestamp_t dat;
-    uint64_t t;
-};
 extern struct adc_reading adcd;
 
 class main_worker : public worker {
@@ -35,14 +19,24 @@ class main_worker : public worker {
         circular_buffer &buff;
         adc_block &adcs;
         main_network_worker *nw_ref;
+
+        worker_visitor *wqv;
+
         main_worker(safe_queue<network_queue_item> &my_qn, safe_queue<work_queue_item> &my_qw,
-                       circular_buffer &buff, adc_block &adcs, main_network_worker *nw_ref)
+                       circular_buffer &buff, adc_block &adcs, main_network_worker *nw_ref,
+                       worker_visitor *wqv)
                 : worker(my_qn, my_qw)
                 , buff(buff)
                 , adcs(adcs)
                 , nw_ref(nw_ref)
+                , wqv(wqv)
         {
-        };
+
+        }
+
+        ~main_worker() {
+            delete wqv;
+        }
 
         void start()
         {
