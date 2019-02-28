@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include "listener.hpp"
 
 /*
@@ -17,19 +18,14 @@
 int
 open_listen(int port)
 {
-    int listenfd, optval=1;
-    struct sockaddr_in serveraddr;
+    int listenfd;
+    struct sockaddr_in serveraddr = {};
 
     /* Set "listenfd" to a newly created stream socket */
-    if ((listenfd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+    if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+        perror("TCP Socket Creation Error");
         return (-1);
     }
-
-    //Not needed.
-    /* Eliminates "Address already in use" error from bind. */
-    if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,
-                   (const void *)&optval , sizeof(int)) < 0)
-        return (-1);
 
     /*
     * Set the IP address of serveraddr to be the special ANY IP address
@@ -39,19 +35,19 @@ open_listen(int port)
     bzero((char *) &serveraddr, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_port = htons((uint16_t) port);
-    //Raspberry Pi will only have one interface, just use ANY.
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     /* Use bind to set the address of "listenfd" to be serveraddr */
     if (bind(listenfd, (struct sockaddr *) &serveraddr,
              sizeof(struct sockaddr)) == -1) {
+        perror("TCP Socket Bind Error");
         return (-1);
     }
 
     /* Use listen to make the socket ready to accept connection requests */
     if (listen(listenfd, LISTEN_MAX) == -1) {
+        perror("TCP Socket Listen Error");
         return (-1);
-
     }
 
     #ifdef DEBUG_LISTENER
@@ -61,30 +57,55 @@ open_listen(int port)
 }
 
 int wait_for_connection(int port, sockaddr *sa) {
-    socklen_t clientlen;
+    socklen_t clientlen = sizeof(struct sockaddr_in);
     int listenfd, connfd;
-    /* Acquire a port, and make sure we got it successfully. */
+
+    /* Create a TCP port, and check that it is valid. */
     listenfd = open_listen(port);
     if (listenfd < 0) {
-        //TODO I think the best option is to try opening a new port if this fails.
-        //Alternately closing the listenfd is a useful fix.
+        // TODO have a procedure (on a new thread) to create a new port and listen again
         fprintf(stderr, "Failed to open listener on %d\n", port);
         exit(1);
     }
 
-    clientlen = sizeof(struct sockaddr_in);
-
     /*
-     * Use accept to set the connection file descriptor of the
-     * request
+     * Accept a new connection and return the file descriptor of
+     * the client.
      */
-    connfd = accept(listenfd, sa,
-                    &clientlen);
+    if((connfd = accept(listenfd, sa, &clientlen)) == -1) {
+        perror("TCP Client Accept Error");
+        return (-1);
+    };
 
     #ifdef DEBUG_LISTENER
         fprintf(stderr, "Received request on connfd on %d\n", connfd);
     #endif /*DEBUG_LISTENER*/
 
+    // Close this since we only care about what the client sends to us.
     close(listenfd);
     return connfd;
+}
+
+int
+create_send_fd(int port, sockaddr_in *sa) {
+    int udp_server_fd;
+
+    // Create a new UDP socket
+    if((udp_server_fd = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+    {
+        perror("UDP Socket Creation Error");
+        exit(-1);
+    }
+
+    // These settings must match those on the mission control end
+    sa->sin_family = AF_INET;
+    sa->sin_port = htons((uint16_t) port);
+    sa->sin_addr.s_addr = htonl(INADDR_ANY);
+    bzero(sa->sin_zero, 8);
+
+    #ifdef DEBUG_LISTENER
+        fprintf(stderr, "Sending on fd %d\n", udp_server_fd);
+    #endif /*DEBUG_LISTENER*/
+
+    return udp_server_fd;
 }
