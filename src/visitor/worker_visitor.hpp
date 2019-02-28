@@ -83,7 +83,7 @@ class worker_visitor {
                        adc_block& adcs,
                        main_network_worker* nw_ref)
                         : qw(qw), qn(qn), adcs(adcs), nw_ref(nw_ref)
-                        , logger(Logger("logs/main_worker.log", "main_worker", LOG_DEBUG))
+                        , logger("logs/main_worker.log", "main_worker", LOG_DEBUG)
                         , ti_list(new timed_item_list(TI_COUNT, 12 << 17))
                         , nq_item({})
                         , adc_data({})
