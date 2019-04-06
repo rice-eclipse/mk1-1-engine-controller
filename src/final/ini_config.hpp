@@ -26,6 +26,9 @@ po::variables_map init_config(unsigned int *port,
 			      int *preignite_ms,
 			      int *hotflow_ms,
 			      bool *ignition_on,
+				  int *pwm_divisor,
+				  int *duty_range,
+				  int *duty_data,
 			      char *filename);
 
 // Global variables_map for accessing config values

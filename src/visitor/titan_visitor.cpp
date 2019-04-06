@@ -6,6 +6,7 @@
 #include <climits>
 #include <unistd.h>
 #include "../final/main_buff_logger.hpp"
+#include <bcm2835.h>
 
 void titan_visitor::visitProc(work_queue_item& wq_item) {
     logger.info("In titan_visitor process case");
@@ -50,6 +51,16 @@ void titan_visitor::visitProc(work_queue_item& wq_item) {
             bcm2835_gpio_write(MAIN_VALVE, LOW);
             bcm2835_gpio_write(WATER_VALVE, LOW);
             bcm2835_gpio_write(GITVC_VALVE, HIGH);
+            break;
+        }
+        case set_tape: {
+            logger.info("Turning heating tape on on pin " + std::to_string(TAPE), now);
+            bcm2835_pwm_set_mode(0, 1, 1); // enable PWM output on channel 0 (Mark-Space mode)
+            break;
+        }
+        case unset_tape: {
+            logger.info("Turning heating tape off on pin " + std::to_string(TAPE), now);
+            bcm2835_pwm_set_mode(0, 1, 0); // disable PWM output on channel 0
             break;
         }
         default: {

@@ -20,6 +20,11 @@
 
 circular_buffer buff(CIRC_SIZE);
 
+// Variables for PWM stuff:
+int pwm_divisor;
+int duty_range;
+int duty_data;
+
 /**
  * A target that runs the final code and does everything.
  *
@@ -58,6 +63,9 @@ int main(int argc, char **argv) {
                 &preignite_ms,
                 &hotflow_ms,
                 &ignition_on,
+                &pwm_divisor,
+                &duty_range,
+                &duty_data,
                 filename);
 
     std::cout << "Reading config options from file: " << argv[1] << '\n';

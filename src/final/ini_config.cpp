@@ -33,6 +33,9 @@ po::variables_map init_config(unsigned int *port,
 			      int *preignite_ms,
 			      int *hotflow_ms,
 			      bool *ignition_on,
+                  int *pwm_divisor,
+				  int *duty_range,
+				  int *duty_data,
 			      char* filename)
 {
     po::options_description desc("Allowed options");
@@ -51,7 +54,10 @@ po::variables_map init_config(unsigned int *port,
         ("Pressure.Pressure_slope", po::value<float>(pressure_slope)->required(), "set pt_comb slope")
         ("Pressure.Pressure_yint", po::value<float>(pressure_yint)->required(), "set pt_comb y intercept")
         ("Pressure.Pressure_max", po::value<int>(pressure_max)->default_value(800), "set max pressure cutoff")
-        ("Pressure.Pressure_min", po::value<int>(pressure_min)->default_value(300), "set min pressure cutoff");
+        ("Pressure.Pressure_min", po::value<int>(pressure_min)->default_value(300), "set min pressure cutoff")
+        ("PWM.Pwm_divisor", po::value<int>(pwm_divisor)->default_value(1), "set the divisor for PWM output on the Pi")
+        ("PWM.Duty_range", po::value<int>(duty_range)->default_value(20), "set the length of a duty cycle for PWM")
+        ("PWM.Duty_data", po::value<int>(duty_data)->default_value(10), "set the portion of a duty cycle that is on");
 
     //todo change dir if needed
     std::ifstream in(filename);
