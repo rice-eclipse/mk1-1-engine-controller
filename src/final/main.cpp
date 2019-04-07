@@ -127,8 +127,16 @@ int main(int argc, char **argv) {
         std::cerr << "Could not initialize SPI." << std::endl;
         return 1;
     };
-
-    result = atexit(initialize_pins);
+    if (engine_type == 0) {
+        // register the Luna pin reinit at exit
+        result = atexit(initialize_pins);
+    } else if (engine_type == 1) {
+        // register the Titan pin reinit at exit
+        result = atexit(titan_initialize_pins);
+    } else {
+        // unknown engine type, set error condition
+        result = 1;
+    }
     if (result != 0) {
         std::cerr << "Could not register exit function." << std::endl;
         return 1;

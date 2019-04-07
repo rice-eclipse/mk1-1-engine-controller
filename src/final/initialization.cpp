@@ -82,7 +82,7 @@ void titan_initialize_pins() {
     // Set up the heating tape pin to operate with PWM.
     bcm2835_gpio_fsel(TAPE, BCM2835_GPIO_FSEL_ALT5);
     bcm2835_pwm_set_clock(pwm_divisor);
-    // bcm2835_pwm_set_mode(0, 1, 0); // using Mark-Space mode (alternating HIGH and LOW writes)
+    bcm2835_pwm_set_mode(0, 1, 0); // using Mark-Space mode (alternating HIGH and LOW writes)
     bcm2835_pwm_set_range(0, duty_range);
     bcm2835_pwm_set_data(0, duty_data);
 }
