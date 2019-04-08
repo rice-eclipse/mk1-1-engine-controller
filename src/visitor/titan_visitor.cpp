@@ -16,41 +16,51 @@ void titan_visitor::visitProc(work_queue_item& wq_item) {
 
     switch (c) {
         case set_water: {
-            logger.info("Turning vent on on pin " + std::to_string(WATER_VALVE), now);
-            bcm2835_gpio_write(WATER_VALVE, LOW);
+            logger.info("Turning vent on on pin " + std::to_string(VENT_VALVE), now);
+            bcm2835_gpio_write(VENT_VALVE, LOW);
             break;
         }
         case unset_water: {
-            logger.info("Turning vent off on pin " + std::to_string(WATER_VALVE), now);
-            bcm2835_gpio_write(WATER_VALVE, HIGH);
+            logger.info("Turning vent off on pin " + std::to_string(VENT_VALVE), now);
+            bcm2835_gpio_write(VENT_VALVE, HIGH);
+            break;
+        }
+        case set_gitvc: {
+            logger.info("Turning tank on on pin " + std::to_string(TANK_VALVE), now);
+            bcm2835_gpio_write(TANK_VALVE, LOW);
+            break;
+        }
+        case unset_gitvc: {
+            logger.info("turning tank off on pin " + std::to_string(TANK_VALVE), now);
+            bcm2835_gpio_write(TANK_VALVE, HIGH);
             break;
         }
         case leak_check: {
             logger.info("Entering Titan Leak Check Preset");
             bcm2835_gpio_write(MAIN_VALVE, HIGH);
-            bcm2835_gpio_write(WATER_VALVE, HIGH);
-            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+            bcm2835_gpio_write(VENT_VALVE, HIGH);
+            bcm2835_gpio_write(TANK_VALVE, HIGH);
             break;
         }
         case fill: {
             logger.info("Entering Titan Fill Preset");
             bcm2835_gpio_write(MAIN_VALVE, HIGH);
-            bcm2835_gpio_write(WATER_VALVE, HIGH);
-            bcm2835_gpio_write(GITVC_VALVE, LOW);
+            bcm2835_gpio_write(VENT_VALVE, HIGH);
+            bcm2835_gpio_write(TANK_VALVE, LOW);
             break;
         }
         case fill_idle: {
             logger.info("Entering Titan Fill Idle Preset");
             bcm2835_gpio_write(MAIN_VALVE, LOW);
-            bcm2835_gpio_write(WATER_VALVE, HIGH);
-            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+            bcm2835_gpio_write(VENT_VALVE, HIGH);
+            bcm2835_gpio_write(TANK_VALVE, HIGH);
             break;
         }
         case def: {
             logger.info("Entering Titan Default Preset");
             bcm2835_gpio_write(MAIN_VALVE, LOW);
-            bcm2835_gpio_write(WATER_VALVE, LOW);
-            bcm2835_gpio_write(GITVC_VALVE, HIGH);
+            bcm2835_gpio_write(VENT_VALVE, LOW);
+            bcm2835_gpio_write(TANK_VALVE, HIGH);
             break;
         }
         case set_tape: {
@@ -89,8 +99,8 @@ void titan_visitor::visitTimed(work_queue_item& wq_item) {
             logger.info("Writing tank off, vent on, main valve on from timed item.", now);
 
             bcm2835_gpio_write(MAIN_VALVE, LOW);
-            bcm2835_gpio_write(VENT, LOW); // VENT open is LOW, not HIGH
-            bcm2835_gpio_write(TANK, HIGH); // TANK off is HIGH, not LOW
+            bcm2835_gpio_write(VENT_VALVE, LOW); // VENT open is LOW, not HIGH
+            bcm2835_gpio_write(TANK_VALVE, HIGH); // TANK off is HIGH, not LOW
 
             start_time_nitr = now;
             burn_on = true;
