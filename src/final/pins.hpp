@@ -21,8 +21,8 @@
 #define TC_ADC ADC_1_CS
 
 // defines for Titan
-#define TANK RPI_V2_GPIO_P1_16 // same as GITVC
-#define VENT RPI_V2_GPIO_P1_13 // same as Water
+#define TANK_VALVE RPI_V2_GPIO_P1_16 // same as GITVC
+#define VENT_VALVE RPI_V2_GPIO_P1_13 // same as Water
 #define TAPE RPI_V2_GPIO_P1_12 // PWM pin on the Pi
 
 #endif //SOFTWARE_PINS_HPP
