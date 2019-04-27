@@ -94,6 +94,7 @@ void worker_visitor::visitProc(work_queue_item& wq_item) {
             break;
         }
         default: {
+            logger.info("Unprocessed case.");
             wq_item.action = wq_none;
             qw.enqueue(wq_item);
             break;

@@ -17,12 +17,13 @@ void titan_visitor::visitProc(work_queue_item& wq_item) {
     switch (c) {
         case set_water: {
             logger.info("Turning vent on on pin " + std::to_string(VENT_VALVE), now);
-            bcm2835_gpio_write(VENT_VALVE, LOW);
+            logger.info("Water on abcd", now);
+            bcm2835_gpio_write(VENT_VALVE, HIGH);
             break;
         }
         case unset_water: {
             logger.info("Turning vent off on pin " + std::to_string(VENT_VALVE), now);
-            bcm2835_gpio_write(VENT_VALVE, HIGH);
+            bcm2835_gpio_write(VENT_VALVE, LOW);
             break;
         }
         case set_gitvc: {
@@ -36,8 +37,9 @@ void titan_visitor::visitProc(work_queue_item& wq_item) {
             break;
         }
         case leak_check: {
+            // Same as default for now
             logger.info("Entering Titan Leak Check Preset");
-            bcm2835_gpio_write(MAIN_VALVE, HIGH);
+            bcm2835_gpio_write(MAIN_VALVE, LOW);
             bcm2835_gpio_write(VENT_VALVE, HIGH);
             bcm2835_gpio_write(TANK_VALVE, HIGH);
             break;
@@ -45,21 +47,21 @@ void titan_visitor::visitProc(work_queue_item& wq_item) {
         case fill: {
             logger.info("Entering Titan Fill Preset");
             bcm2835_gpio_write(MAIN_VALVE, HIGH);
-            bcm2835_gpio_write(VENT_VALVE, HIGH);
+            bcm2835_gpio_write(VENT_VALVE, LOW);
             bcm2835_gpio_write(TANK_VALVE, LOW);
             break;
         }
         case fill_idle: {
             logger.info("Entering Titan Fill Idle Preset");
             bcm2835_gpio_write(MAIN_VALVE, LOW);
-            bcm2835_gpio_write(VENT_VALVE, HIGH);
+            bcm2835_gpio_write(VENT_VALVE, LOW);
             bcm2835_gpio_write(TANK_VALVE, HIGH);
             break;
         }
         case def: {
             logger.info("Entering Titan Default Preset");
             bcm2835_gpio_write(MAIN_VALVE, LOW);
-            bcm2835_gpio_write(VENT_VALVE, LOW);
+            bcm2835_gpio_write(VENT_VALVE, HIGH);
             bcm2835_gpio_write(TANK_VALVE, HIGH);
             break;
         }
@@ -96,11 +98,12 @@ void titan_visitor::visitTimed(work_queue_item& wq_item) {
             ti_list->disable(ign2);
             ti_list->enable(ign3, now);
 
-            logger.info("Writing tank off, vent on, main valve on from timed item.", now);
+            //logger.info("Writing tank off, vent on, main valve on from timed item.", now);
 
-            bcm2835_gpio_write(MAIN_VALVE, LOW);
-            bcm2835_gpio_write(VENT_VALVE, LOW); // VENT open is LOW, not HIGH
-            bcm2835_gpio_write(TANK_VALVE, HIGH); // TANK off is HIGH, not LOW
+            logger.info("Starting burn", now);
+            //bcm2835_gpio_write(MAIN_VALVE, LOW);
+            //bcm2835_gpio_write(VENT_VALVE, LOW); // VENT open is LOW, not HIGH
+            //bcm2835_gpio_write(TANK_VALVE, HIGH); // TANK off is HIGH, not LOW
 
             start_time_nitr = now;
             burn_on = true;
@@ -114,6 +117,12 @@ void titan_visitor::visitTimed(work_queue_item& wq_item) {
             logger.debug("Writing ignition off from timed item.", now);
             bcm2835_gpio_write(IGN_START, LOW);
 
+            // Post-ignition state
+            // logger.debug("Writing vent open, main closed, tank open for post-ignition", now);
+            logger.debug("Burn ending", now);
+            // bcm2835_gpio_write(VENT_VALVE, HIGH);
+            // bcm2835_gpio_write(MAIN_VALVE, LOW); // vent LOW is open
+            // bcm2835_gpio_write(TANK_VALVE, LOW);
             /*
              * TODO we don't need to close a valve since the ignition valve state
              * is the same as the default valve state. Is there a potential issue

@@ -60,7 +60,7 @@ void titan_initialize_pins() {
     bcm2835_gpio_write(MAIN_VALVE, LOW);
 
     bcm2835_gpio_fsel(VENT_VALVE, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_write(VENT_VALVE, LOW); // VENT LOW is open, HIGH is closed
+    bcm2835_gpio_write(VENT_VALVE, HIGH); // VENT LOW is open, HIGH is closed
 
     bcm2835_gpio_fsel(TANK_VALVE, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(TANK_VALVE, HIGH);
